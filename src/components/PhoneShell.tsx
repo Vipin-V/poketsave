@@ -1,14 +1,9 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Bookmark, Briefcase, CalendarDays, Plus, Star } from "lucide-react";
 import type { ReactNode } from "react";
+import { AccountButton } from "./AccountButton";
 
-export function PhoneShell({
-  children,
-  onAdd,
-}: {
-  children: ReactNode;
-  onAdd: () => void;
-}) {
+export function PhoneShell({ children, onAdd }: { children: ReactNode; onAdd: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   return (
@@ -17,6 +12,9 @@ export function PhoneShell({
         className="flex-1 px-4 pb-36"
         style={{ paddingTop: "max(1.25rem, env(safe-area-inset-top))" }}
       >
+        <div className="mb-3 flex justify-end">
+          <AccountButton />
+        </div>
         {children}
       </main>
 
@@ -26,7 +24,12 @@ export function PhoneShell({
       >
         <div className="glass-strong flex items-center rounded-3xl px-2 py-2 shadow-2xl">
           <div className="flex flex-1 items-center">
-            <TabLink to="/" active={pathname === "/"} icon={<Bookmark className="size-5" />} label="Library" />
+            <TabLink
+              to="/"
+              active={pathname === "/"}
+              icon={<Bookmark className="size-5" />}
+              label="Library"
+            />
             <TabLink
               to="/calendar"
               active={pathname.startsWith("/calendar")}

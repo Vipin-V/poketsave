@@ -18,7 +18,7 @@ export const fetchLinkMetadata = createServerFn({ method: "POST" })
       const res = await fetch(url, {
         headers: {
           "user-agent":
-            "Mozilla/5.0 (compatible; PocketBookmarks/1.0; +https://lovable.dev) AppleWebKit/537.36",
+            "Mozilla/5.0 (compatible; PocketBookmarks/1.0; +https://github.com/Vipin-V/poketsave) AppleWebKit/537.36",
           accept: "text/html,application/xhtml+xml",
         },
         signal: AbortSignal.timeout(8000),

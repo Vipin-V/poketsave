@@ -1,26 +1,42 @@
-# Mobile Vault
+# Pocket
 
-create an beautiful aesthetic website which is responsive for only mobile devices that should include all types of mobile screen, so people can save bookmarks like links of anything like some post form x or reddit or a website link or a job link and they can easily find it later  and for jobs it should also alert the user before the last date of its apply ends, there was a project build by dhravya shah for saving bookmarks,
+A mobile-first bookmark vault: save links from X, Reddit, Instagram, articles, or job postings, and find them again fast. Job bookmarks get a company/role/deadline field and a countdown that turns amber then red as the application window closes.
 
-This project was built with [Lovable](https://lovable.dev).
+Built with TanStack Start, React 19, Tailwind CSS v4, and Appwrite (database + auth). Bookmarks work fully offline in the browser's local storage; signing in with Google backs them up and syncs them across devices.
 
-**Live app**: https://poketsave.lovable.app
+## Setup
 
-## Build with Lovable
+1. **Install dependencies**
+   ```sh
+   bun install
+   ```
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/79dce22c-59eb-4347-978a-ed89278de542).
+2. **Create an Appwrite project** — [cloud.appwrite.io](https://cloud.appwrite.io) has a free tier that covers this app comfortably; if you have the [GitHub Student Developer Pack](https://education.github.com/pack), Appwrite's listing there upgrades you to the Pro plan at no cost. Under your project's *Overview*, add a **Web** platform for the domain you'll run this on (`localhost` for dev, plus your Vercel domain later).
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+3. **Create a database and collection** — make a database, then inside it a `bookmarks` collection with **Document Security** turned on. Add these attributes (all match `src/lib/bookmarks.ts`'s `Bookmark` type):
 
-## Development
+   | Attribute | Type | Required |
+   |---|---|---|
+   | `url`, `title`, `domain`, `category` | String | Yes |
+   | `description`, `image`, `favicon`, `notes`, `company`, `role` | String | No |
+   | `deadline` | String (`yyyy-mm-dd`) | No |
+   | `tags` | String, array | No |
+   | `applied`, `favorite` | Boolean | Yes (default `false`) |
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+   No `userId` field is needed — per-document permissions (set automatically when a bookmark is created) already scope each document to its owner.
 
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
-```
+4. **Enable Google sign-in** (optional — the app works fully without an account) — under *Auth → Settings*, enable the **Google** OAuth provider with a Client ID/Secret from a Google Cloud OAuth app. Appwrite's provider page shows you the exact redirect URI to register in Google Cloud Console.
+
+5. **Configure environment variables** — copy `.env.example` to `.env` and fill in your project's endpoint, project ID, database ID, and collection ID (all visible in the Appwrite console):
+   ```sh
+   cp .env.example .env
+   ```
+
+6. **Run it**
+   ```sh
+   bun dev
+   ```
+
+## Deploying
+
+The build targets Vercel out of the box (via Nitro's `vercel` preset in `vite.config.ts`). Connect the repo in Vercel or run `vercel deploy`, and add the same environment variables from `.env` to the Vercel project's settings.

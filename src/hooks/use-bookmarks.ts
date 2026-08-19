@@ -1,11 +1,75 @@
 import { useCallback, useEffect, useState } from "react";
-import { loadBookmarks, saveBookmarks, type Bookmark } from "@/lib/bookmarks";
+import { toast } from "sonner";
+import { ID, Permission, Query, Role, type Models } from "appwrite";
+import { loadBookmarks, saveBookmarks, type Bookmark, type Category } from "@/lib/bookmarks";
+import { BOOKMARKS_COLLECTION_ID, DATABASE_ID, databases } from "@/integrations/appwrite/client";
+import { useAuth } from "./use-auth";
+
+type BookmarkDoc = Models.Document & {
+  url: string;
+  title: string;
+  description: string | null;
+  image: string | null;
+  favicon: string | null;
+  domain: string;
+  category: string;
+  tags: string[];
+  notes: string | null;
+  company: string | null;
+  role: string | null;
+  deadline: string | null;
+  applied: boolean;
+  favorite: boolean;
+};
+
+function docToBookmark(doc: BookmarkDoc): Bookmark {
+  return {
+    id: doc.$id,
+    url: doc.url,
+    title: doc.title,
+    description: doc.description ?? undefined,
+    image: doc.image ?? undefined,
+    favicon: doc.favicon ?? undefined,
+    domain: doc.domain,
+    category: doc.category as Category,
+    tags: doc.tags ?? [],
+    notes: doc.notes ?? undefined,
+    createdAt: doc.$createdAt,
+    company: doc.company ?? undefined,
+    role: doc.role ?? undefined,
+    deadline: doc.deadline ?? undefined,
+    applied: doc.applied,
+    favorite: doc.favorite,
+  };
+}
+
+function bookmarkToData(b: Partial<Bookmark>) {
+  const data: Record<string, unknown> = {};
+  if ("url" in b) data["url"] = b.url;
+  if ("title" in b) data["title"] = b.title;
+  if ("description" in b) data["description"] = b.description ?? null;
+  if ("image" in b) data["image"] = b.image ?? null;
+  if ("favicon" in b) data["favicon"] = b.favicon ?? null;
+  if ("domain" in b) data["domain"] = b.domain;
+  if ("category" in b) data["category"] = b.category;
+  if ("tags" in b) data["tags"] = b.tags;
+  if ("notes" in b) data["notes"] = b.notes ?? null;
+  if ("company" in b) data["company"] = b.company ?? null;
+  if ("role" in b) data["role"] = b.role ?? null;
+  if ("deadline" in b) data["deadline"] = b.deadline ?? null;
+  if ("applied" in b) data["applied"] = b.applied ?? false;
+  if ("favorite" in b) data["favorite"] = b.favorite ?? false;
+  return data;
+}
 
 export function useBookmarks() {
-  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+  const { user, ready: authReady } = useAuth();
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>(() => loadBookmarks());
   const [ready, setReady] = useState(false);
 
+  // Guest mode: identical to the pre-auth behaviour, pure localStorage.
   useEffect(() => {
+    if (user) return;
     const sync = () => setBookmarks(loadBookmarks());
     sync();
     setReady(true);
@@ -15,19 +79,136 @@ export function useBookmarks() {
       window.removeEventListener("pocket:bookmarks", sync);
       window.removeEventListener("storage", sync);
     };
-  }, []);
+  }, [user]);
 
-  const add = useCallback((b: Bookmark) => {
-    saveBookmarks([b, ...loadBookmarks()]);
-  }, []);
+  // Signed-in mode: cloud is the source of truth. On the transition into a
+  // session, upload any local-only bookmarks once, then keep localStorage as
+  // a warm offline mirror of whatever the cloud has.
+  useEffect(() => {
+    if (!authReady || !user) return;
+    let cancelled = false;
 
-  const update = useCallback((id: string, patch: Partial<Bookmark>) => {
-    saveBookmarks(loadBookmarks().map((b) => (b.id === id ? { ...b, ...patch } : b)));
-  }, []);
+    (async () => {
+      try {
+        const local = loadBookmarks();
+        const existing = await databases.listDocuments<BookmarkDoc>(
+          DATABASE_ID,
+          BOOKMARKS_COLLECTION_ID,
+          [Query.orderDesc("$createdAt")],
+        );
+        const cloud = existing.documents.map(docToBookmark);
+        const cloudIds = new Set(cloud.map((b) => b.id));
+        const cloudUrls = new Set(cloud.map((b) => b.url));
+        const toUpload = local.filter((b) => !cloudIds.has(b.id) && !cloudUrls.has(b.url));
 
-  const remove = useCallback((id: string) => {
-    saveBookmarks(loadBookmarks().filter((b) => b.id !== id));
-  }, []);
+        const uploaded = await Promise.all(
+          toUpload.map((b) =>
+            databases.createDocument<BookmarkDoc>(
+              DATABASE_ID,
+              BOOKMARKS_COLLECTION_ID,
+              ID.custom(b.id),
+              bookmarkToData(b) as Omit<BookmarkDoc, keyof Models.Document>,
+              [
+                Permission.read(Role.user(user.$id)),
+                Permission.update(Role.user(user.$id)),
+                Permission.delete(Role.user(user.$id)),
+              ],
+            ),
+          ),
+        );
+
+        const merged = [...uploaded.map(docToBookmark), ...cloud].sort((a, b) =>
+          a.createdAt < b.createdAt ? 1 : -1,
+        );
+        if (cancelled) return;
+        setBookmarks(merged);
+        saveBookmarks(merged);
+        if (toUpload.length > 0) {
+          toast(
+            `Synced ${toUpload.length} saved link${toUpload.length > 1 ? "s" : ""} to your account`,
+          );
+        }
+      } catch {
+        if (!cancelled)
+          toast("Couldn't sync with your account — showing what's saved on this device.");
+      } finally {
+        if (!cancelled) setReady(true);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user, authReady]);
+
+  const add = useCallback(
+    (b: Bookmark) => {
+      if (user) {
+        setBookmarks((prev) => {
+          const next = [b, ...prev];
+          saveBookmarks(next);
+          return next;
+        });
+        void databases
+          .createDocument<BookmarkDoc>(
+            DATABASE_ID,
+            BOOKMARKS_COLLECTION_ID,
+            ID.custom(b.id),
+            bookmarkToData(b) as Omit<BookmarkDoc, keyof Models.Document>,
+            [
+              Permission.read(Role.user(user.$id)),
+              Permission.update(Role.user(user.$id)),
+              Permission.delete(Role.user(user.$id)),
+            ],
+          )
+          .catch(() => toast("Couldn't save that to your account — it's kept on this device."));
+      } else {
+        saveBookmarks([b, ...loadBookmarks()]);
+      }
+    },
+    [user],
+  );
+
+  const update = useCallback(
+    (id: string, patch: Partial<Bookmark>) => {
+      if (user) {
+        setBookmarks((prev) => {
+          const next = prev.map((b) => (b.id === id ? { ...b, ...patch } : b));
+          saveBookmarks(next);
+          return next;
+        });
+        void databases
+          .updateDocument<BookmarkDoc>(
+            DATABASE_ID,
+            BOOKMARKS_COLLECTION_ID,
+            id,
+            bookmarkToData(patch),
+          )
+          .catch(() => toast("Couldn't update that on your account."));
+      } else {
+        saveBookmarks(loadBookmarks().map((b) => (b.id === id ? { ...b, ...patch } : b)));
+      }
+    },
+    [user],
+  );
+
+  const remove = useCallback(
+    (id: string) => {
+      if (user) {
+        setBookmarks((prev) => {
+          const next = prev.filter((b) => b.id !== id);
+          saveBookmarks(next);
+          return next;
+        });
+        void databases
+          .deleteDocument(DATABASE_ID, BOOKMARKS_COLLECTION_ID, id)
+          .catch(() => toast("Couldn't delete that from your account."));
+      } else {
+        saveBookmarks(loadBookmarks().filter((b) => b.id !== id));
+      }
+    },
+    [user],
+  );
 
   return { bookmarks, ready, add, update, remove };
 }
