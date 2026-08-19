@@ -2,7 +2,12 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ID, Permission, Query, Role, type Models } from "appwrite";
 import { loadBookmarks, saveBookmarks, type Bookmark, type Category } from "@/lib/bookmarks";
-import { BOOKMARKS_COLLECTION_ID, DATABASE_ID, databases } from "@/integrations/appwrite/client";
+import {
+  BOOKMARKS_COLLECTION_ID,
+  DATABASE_ID,
+  client,
+  databases,
+} from "@/integrations/appwrite/client";
 import { useAuth } from "./use-auth";
 
 type BookmarkDoc = Models.Document & {
@@ -139,6 +144,38 @@ export function useBookmarks() {
     return () => {
       cancelled = true;
     };
+  }, [user, authReady]);
+
+  // Cross-device sync: push updates from other sessions (e.g. another phone
+  // or browser) into this one as they happen, instead of only on page load.
+  useEffect(() => {
+    if (!authReady || !user) return;
+
+    const channel = `databases.${DATABASE_ID}.collections.${BOOKMARKS_COLLECTION_ID}.documents`;
+    const unsubscribe = client.subscribe<BookmarkDoc>(channel, (event) => {
+      const doc = event.payload;
+
+      if (event.events.some((e) => e.endsWith(".delete"))) {
+        setBookmarks((prev) => {
+          const next = prev.filter((b) => b.id !== doc.$id);
+          saveBookmarks(next);
+          return next;
+        });
+        return;
+      }
+
+      const bookmark = docToBookmark(doc);
+      setBookmarks((prev) => {
+        const next = prev.some((b) => b.id === bookmark.id)
+          ? prev.map((b) => (b.id === bookmark.id ? bookmark : b))
+          : [bookmark, ...prev];
+        next.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+        saveBookmarks(next);
+        return next;
+      });
+    });
+
+    return () => unsubscribe();
   }, [user, authReady]);
 
   const add = useCallback(

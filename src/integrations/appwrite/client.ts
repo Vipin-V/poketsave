@@ -13,7 +13,7 @@ export const BOOKMARKS_COLLECTION_ID = import.meta.env[
 // every call on this instead of relying on requests to error out.
 export const isAppwriteConfigured = Boolean(ENDPOINT && PROJECT_ID);
 
-const client = new Client();
+export const client = new Client();
 if (isAppwriteConfigured) client.setEndpoint(ENDPOINT).setProject(PROJECT_ID);
 
 export const account = new Account(client);
