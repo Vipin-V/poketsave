@@ -4,19 +4,19 @@ export type Bookmark = {
   id: string;
   url: string;
   title: string;
-  description?: string;
-  image?: string;
-  favicon?: string;
+  description?: string | undefined;
+  image?: string | undefined;
+  favicon?: string | undefined;
   domain: string;
   category: Category;
   tags: string[];
-  notes?: string;
+  notes?: string | undefined;
   createdAt: string;
   /* job fields */
-  company?: string;
-  role?: string;
-  deadline?: string; // yyyy-mm-dd
-  applied?: boolean;
+  company?: string | undefined;
+  role?: string | undefined;
+  deadline?: string | undefined; // yyyy-mm-dd
+  applied?: boolean | undefined;
 };
 
 export const CATEGORIES: { value: Category; label: string }[] = [
