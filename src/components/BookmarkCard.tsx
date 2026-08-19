@@ -17,18 +17,12 @@ export function BookmarkCard({ bookmark }: { bookmark: Bookmark }) {
   const { update } = useBookmarks();
 
   return (
-    <Link
-      to="/bookmark/$id"
-      params={{ id: bookmark.id }}
-      className="glass relative block rounded-2xl p-3.5 transition-transform active:scale-[0.985]"
-    >
+    <div className="relative">
       <button
         type="button"
         aria-label={bookmark.favorite ? "Remove from favorites" : "Add to favorites"}
         aria-pressed={bookmark.favorite ? true : false}
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
+        onClick={() => {
           update(bookmark.id, { favorite: !bookmark.favorite });
           toast(bookmark.favorite ? "Removed from favorites" : "Added to favorites");
         }}
@@ -38,6 +32,11 @@ export function BookmarkCard({ bookmark }: { bookmark: Bookmark }) {
           className={`size-4 ${bookmark.favorite ? "fill-warn text-warn" : "text-muted-foreground"}`}
         />
       </button>
+      <Link
+        to="/bookmark/$id"
+        params={{ id: bookmark.id }}
+        className="glass block rounded-2xl p-3.5 transition-transform active:scale-[0.985]"
+      >
       <div className="flex gap-3">
         <img
           src={bookmark.favicon || faviconFor(bookmark.domain)}
