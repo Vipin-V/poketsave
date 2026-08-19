@@ -1,9 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowLeft, CheckCircle2, ExternalLink, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ExternalLink, Pencil, Share2, Star, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { PhoneShell } from "@/components/PhoneShell";
 import { AddBookmarkSheet } from "@/components/AddBookmarkSheet";
 import { DeadlinePill } from "@/components/DeadlinePill";
+import { shareBookmarks } from "@/lib/share";
 import { Button } from "@/components/ui/button";
 import { useBookmarks } from "@/hooks/use-bookmarks";
 import {
