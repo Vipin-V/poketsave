@@ -76,6 +76,7 @@ export function BookmarkCard({ bookmark }: { bookmark: Bookmark }) {
           />
         ) : null}
       </div>
-    </Link>
+      </Link>
+    </div>
   );
 }
