@@ -66,7 +66,7 @@ function TabLink({
   return (
     <Link
       to={to}
-      className={`flex min-h-11 min-w-24 flex-col items-center justify-center gap-0.5 rounded-2xl px-4 py-1.5 text-[11px] font-medium transition-colors ${
+      className={`flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-2xl px-2 py-1.5 text-[11px] font-medium transition-colors ${
         active ? "text-primary" : "text-muted-foreground"
       }`}
     >
