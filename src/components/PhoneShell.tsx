@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Bookmark, Briefcase, Plus, Star } from "lucide-react";
+import { Bookmark, Briefcase, CalendarDays, Plus, Star } from "lucide-react";
 import type { ReactNode } from "react";
 
 export function PhoneShell({
@@ -24,28 +24,38 @@ export function PhoneShell({
         className="fixed inset-x-0 bottom-0 z-40 mx-auto w-full max-w-[26rem] px-4"
         style={{ paddingBottom: "max(0.85rem, env(safe-area-inset-bottom))" }}
       >
-        <div className="glass-strong flex items-center justify-between rounded-3xl px-2 py-2 shadow-2xl">
-          <TabLink to="/" active={pathname === "/"} icon={<Bookmark className="size-5" />} label="Library" />
-          <TabLink
-            to="/favorites"
-            active={pathname.startsWith("/favorites")}
-            icon={<Star className="size-5" />}
-            label="Favorites"
-          />
+        <div className="glass-strong flex items-center rounded-3xl px-2 py-2 shadow-2xl">
+          <div className="flex flex-1 items-center">
+            <TabLink to="/" active={pathname === "/"} icon={<Bookmark className="size-5" />} label="Library" />
+            <TabLink
+              to="/calendar"
+              active={pathname.startsWith("/calendar")}
+              icon={<CalendarDays className="size-5" />}
+              label="Calendar"
+            />
+          </div>
           <button
             type="button"
             onClick={onAdd}
             aria-label="Add bookmark"
-            className="neon-glow -mt-6 grid size-14 place-items-center rounded-full bg-primary text-primary-foreground transition-transform active:scale-95"
+            className="neon-glow -mt-6 grid size-14 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground transition-transform active:scale-95"
           >
             <Plus className="size-6" strokeWidth={2.6} />
           </button>
-          <TabLink
-            to="/jobs"
-            active={pathname.startsWith("/jobs")}
-            icon={<Briefcase className="size-5" />}
-            label="Jobs"
-          />
+          <div className="flex flex-1 items-center">
+            <TabLink
+              to="/jobs"
+              active={pathname.startsWith("/jobs")}
+              icon={<Briefcase className="size-5" />}
+              label="Jobs"
+            />
+            <TabLink
+              to="/favorites"
+              active={pathname.startsWith("/favorites")}
+              icon={<Star className="size-5" />}
+              label="Saved"
+            />
+          </div>
         </div>
       </nav>
     </div>
