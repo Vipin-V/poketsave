@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { PhoneShell } from "@/components/PhoneShell";
 import { BookmarkCard } from "@/components/BookmarkCard";
 import { AddBookmarkSheet } from "@/components/AddBookmarkSheet";
+import { ShareButton } from "@/components/ShareButton";
 import { useBookmarks } from "@/hooks/use-bookmarks";
 import { daysLeft } from "@/lib/bookmarks";
 
@@ -40,9 +41,16 @@ function Jobs() {
 
   return (
     <PhoneShell onAdd={() => setOpen(true)}>
-      <header className="mb-5">
-        <p className="text-xs tracking-[0.22em] text-muted-foreground uppercase">Deadlines</p>
-        <h1 className="mt-1 text-3xl font-bold text-balance-tight">Jobs closing soon</h1>
+      <header className="mb-5 flex items-end justify-between gap-3">
+        <div>
+          <p className="text-xs tracking-[0.22em] text-muted-foreground uppercase">Deadlines</p>
+          <h1 className="mt-1 text-3xl font-bold text-balance-tight">Jobs closing soon</h1>
+        </div>
+        <ShareButton
+          bookmarks={active}
+          label="Share"
+          heading="Job openings closing soon (shared from Pocket):"
+        />
       </header>
 
       {ready && active.length === 0 && rest.length === 0 ? (
