@@ -156,6 +156,17 @@ function Detail() {
         >
           <ExternalLink className="size-4" /> Open link
         </a>
+        <Button
+          variant="secondary"
+          className="h-12 w-full rounded-2xl"
+          onClick={async () => {
+            const r = await shareBookmarks([bookmark]);
+            if (r === "copied") toast("Copied to clipboard — paste it in any chat.");
+            if (r === "failed") toast("Couldn't share this right now.");
+          }}
+        >
+          <Share2 className="mr-1 size-4" /> Share
+        </Button>
         <div className="flex gap-2">
           <Button variant="secondary" className="h-12 flex-1 rounded-2xl" onClick={() => setEditing(true)}>
             <Pencil className="mr-1 size-4" /> Edit
