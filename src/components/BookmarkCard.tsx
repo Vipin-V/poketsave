@@ -32,7 +32,7 @@ export function BookmarkCard({ bookmark }: { bookmark: Bookmark }) {
           update(bookmark.id, { favorite: !bookmark.favorite });
           toast(bookmark.favorite ? "Removed from favorites" : "Added to favorites");
         }}
-        className="absolute top-2 right-2 grid size-9 place-items-center rounded-full"
+        className="absolute right-1.5 bottom-1.5 z-10 grid size-9 place-items-center rounded-full"
       >
         <Star
           className={`size-4 ${bookmark.favorite ? "fill-warn text-warn" : "text-muted-foreground"}`}
@@ -51,7 +51,7 @@ export function BookmarkCard({ bookmark }: { bookmark: Bookmark }) {
           </h3>
           <p className="mt-1 truncate text-xs text-muted-foreground">{bookmark.domain}</p>
 
-          <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+          <div className="mt-2.5 flex flex-wrap items-center gap-1.5 pr-9">
             <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium tracking-wide text-secondary-foreground uppercase">
               {categoryLabel(bookmark.category)}
             </span>
