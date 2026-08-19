@@ -25,6 +25,7 @@ type BookmarkDoc = Models.Document & {
   deadline: string | null;
   applied: boolean;
   favorite: boolean;
+  albumId: string | null;
 };
 
 function docToBookmark(doc: BookmarkDoc): Bookmark {
@@ -45,6 +46,7 @@ function docToBookmark(doc: BookmarkDoc): Bookmark {
     deadline: doc.deadline ?? undefined,
     applied: doc.applied,
     favorite: doc.favorite,
+    albumId: doc.albumId ?? undefined,
   };
 }
 
@@ -64,6 +66,7 @@ function bookmarkToData(b: Partial<Bookmark>) {
   if ("deadline" in b) data["deadline"] = b.deadline ?? null;
   if ("applied" in b) data["applied"] = b.applied ?? false;
   if ("favorite" in b) data["favorite"] = b.favorite ?? false;
+  if ("albumId" in b) data["albumId"] = b.albumId ?? null;
   return data;
 }
 
@@ -179,24 +182,33 @@ export function useBookmarks() {
   }, [user, authReady]);
 
   const add = useCallback(
-    (b: Bookmark) => {
+    // Pass teamId when saving into a shared album — grants every current and
+    // future member of that album's team access instead of just this user.
+    (b: Bookmark, teamId?: string) => {
       if (user) {
         setBookmarks((prev) => {
           const next = [b, ...prev];
           saveBookmarks(next);
           return next;
         });
+        const permissions = teamId
+          ? [
+              Permission.read(Role.team(teamId)),
+              Permission.update(Role.team(teamId)),
+              Permission.delete(Role.team(teamId)),
+            ]
+          : [
+              Permission.read(Role.user(user.$id)),
+              Permission.update(Role.user(user.$id)),
+              Permission.delete(Role.user(user.$id)),
+            ];
         void databases
           .createDocument<BookmarkDoc>(
             DATABASE_ID,
             BOOKMARKS_COLLECTION_ID,
             ID.custom(b.id),
             bookmarkToData(b) as Omit<BookmarkDoc, keyof Models.Document>,
-            [
-              Permission.read(Role.user(user.$id)),
-              Permission.update(Role.user(user.$id)),
-              Permission.delete(Role.user(user.$id)),
-            ],
+            permissions,
           )
           .catch(() => toast("Couldn't save that to your account — it's kept on this device."));
       } else {

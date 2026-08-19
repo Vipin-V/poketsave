@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Bookmark, Briefcase, CalendarDays, Plus, Star } from "lucide-react";
+import { Bookmark, Briefcase, CalendarDays, Plus, Star, Users } from "lucide-react";
 import type { ReactNode } from "react";
 import { AccountButton } from "./AccountButton";
 
@@ -29,6 +29,12 @@ export function PhoneShell({ children, onAdd }: { children: ReactNode; onAdd: ()
               active={pathname === "/"}
               icon={<Bookmark className="size-5" />}
               label="Library"
+            />
+            <TabLink
+              to="/albums"
+              active={pathname.startsWith("/albums")}
+              icon={<Users className="size-5" />}
+              label="Albums"
             />
             <TabLink
               to="/calendar"

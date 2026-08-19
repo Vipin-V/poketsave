@@ -5,7 +5,8 @@ function line(b: Bookmark): string {
   if (b.category === "job") {
     const meta = [b.role, b.company].filter(Boolean).join(" · ");
     if (meta) bits.push(meta);
-    if (b.deadline) bits.push(`${deadlineLabel(daysLeft(b.deadline))} (apply before ${b.deadline})`);
+    if (b.deadline)
+      bits.push(`${deadlineLabel(daysLeft(b.deadline))} (apply before ${b.deadline})`);
   }
   return `${bits.join(" — ")}\n${b.url}`;
 }
@@ -26,7 +27,9 @@ export async function shareBookmarks(
   if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
     try {
       await navigator.share(
-        list.length === 1 && list[0] ? { title, text: list[0].title, url: list[0].url } : { title, text },
+        list.length === 1 && list[0]
+          ? { title, text: list[0].title, url: list[0].url }
+          : { title, text },
       );
       return "shared";
     } catch (err) {
@@ -36,6 +39,27 @@ export async function shareBookmarks(
 
   try {
     await navigator.clipboard.writeText(text);
+    return "copied";
+  } catch {
+    return "failed";
+  }
+}
+
+export async function shareLink(
+  url: string,
+  opts: { title?: string; text?: string } = {},
+): Promise<"shared" | "copied" | "cancelled" | "failed"> {
+  if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+    try {
+      await navigator.share({ title: opts.title, text: opts.text, url });
+      return "shared";
+    } catch (err) {
+      if ((err as DOMException)?.name === "AbortError") return "cancelled";
+    }
+  }
+
+  try {
+    await navigator.clipboard.writeText(url);
     return "copied";
   } catch {
     return "failed";

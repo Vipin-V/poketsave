@@ -18,6 +18,8 @@ export type Bookmark = {
   deadline?: string | undefined; // yyyy-mm-dd
   applied?: boolean | undefined;
   favorite?: boolean | undefined;
+  /* set when this bookmark lives in a shared album instead of a personal list */
+  albumId?: string | undefined;
 };
 
 export const CATEGORIES: { value: Category; label: string }[] = [
@@ -43,11 +45,7 @@ export function getDomain(url: string): string {
 export function guessCategory(url: string): Category {
   const d = getDomain(url).toLowerCase();
   const path = url.toLowerCase();
-  if (
-    /(jobs|careers|greenhouse|lever\.co|workday|ashbyhq|wellfound|naukri|indeed)/.test(
-      d + path,
-    )
-  )
+  if (/(jobs|careers|greenhouse|lever\.co|workday|ashbyhq|wellfound|naukri|indeed)/.test(d + path))
     return "job";
   if (/(x\.com|twitter\.com|reddit\.com|instagram\.com|threads|linkedin\.com|mastodon)/.test(d))
     return "social";

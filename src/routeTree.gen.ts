@@ -13,7 +13,10 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as FavoritesRouteImport } from './routes/favorites'
 import { Route as JobsRouteImport } from './routes/jobs'
+import { Route as AlbumsIndexRouteImport } from './routes/albums/index'
+import { Route as AlbumsIdRouteImport } from './routes/albums/$id'
 import { Route as BookmarkIdRouteImport } from './routes/bookmark.$id'
+import { Route as AlbumsJoinIdRouteImport } from './routes/albums/join.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -35,9 +38,24 @@ const JobsRoute = JobsRouteImport.update({
   path: '/jobs',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AlbumsIndexRoute = AlbumsIndexRouteImport.update({
+  id: '/albums/',
+  path: '/albums/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AlbumsIdRoute = AlbumsIdRouteImport.update({
+  id: '/albums/$id',
+  path: '/albums/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BookmarkIdRoute = BookmarkIdRouteImport.update({
   id: '/bookmark/$id',
   path: '/bookmark/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AlbumsJoinIdRoute = AlbumsJoinIdRouteImport.update({
+  id: '/albums/join/$id',
+  path: '/albums/join/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -46,14 +64,20 @@ export interface FileRoutesByFullPath {
   '/calendar': typeof CalendarRoute
   '/favorites': typeof FavoritesRoute
   '/jobs': typeof JobsRoute
+  '/albums/$id': typeof AlbumsIdRoute
   '/bookmark/$id': typeof BookmarkIdRoute
+  '/albums/': typeof AlbumsIndexRoute
+  '/albums/join/$id': typeof AlbumsJoinIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/calendar': typeof CalendarRoute
   '/favorites': typeof FavoritesRoute
   '/jobs': typeof JobsRoute
+  '/albums/$id': typeof AlbumsIdRoute
   '/bookmark/$id': typeof BookmarkIdRoute
+  '/albums': typeof AlbumsIndexRoute
+  '/albums/join/$id': typeof AlbumsJoinIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -61,14 +85,42 @@ export interface FileRoutesById {
   '/calendar': typeof CalendarRoute
   '/favorites': typeof FavoritesRoute
   '/jobs': typeof JobsRoute
+  '/albums/$id': typeof AlbumsIdRoute
   '/bookmark/$id': typeof BookmarkIdRoute
+  '/albums/': typeof AlbumsIndexRoute
+  '/albums/join/$id': typeof AlbumsJoinIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/calendar' | '/favorites' | '/jobs' | '/bookmark/$id'
+  fullPaths:
+    | '/'
+    | '/calendar'
+    | '/favorites'
+    | '/jobs'
+    | '/albums/$id'
+    | '/bookmark/$id'
+    | '/albums/'
+    | '/albums/join/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/calendar' | '/favorites' | '/jobs' | '/bookmark/$id'
-  id: '__root__' | '/' | '/calendar' | '/favorites' | '/jobs' | '/bookmark/$id'
+  to:
+    | '/'
+    | '/calendar'
+    | '/favorites'
+    | '/jobs'
+    | '/albums/$id'
+    | '/bookmark/$id'
+    | '/albums'
+    | '/albums/join/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/calendar'
+    | '/favorites'
+    | '/jobs'
+    | '/albums/$id'
+    | '/bookmark/$id'
+    | '/albums/'
+    | '/albums/join/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -76,7 +128,10 @@ export interface RootRouteChildren {
   CalendarRoute: typeof CalendarRoute
   FavoritesRoute: typeof FavoritesRoute
   JobsRoute: typeof JobsRoute
+  AlbumsIdRoute: typeof AlbumsIdRoute
   BookmarkIdRoute: typeof BookmarkIdRoute
+  AlbumsIndexRoute: typeof AlbumsIndexRoute
+  AlbumsJoinIdRoute: typeof AlbumsJoinIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -109,11 +164,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof JobsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/albums/': {
+      id: '/albums/'
+      path: '/albums'
+      fullPath: '/albums/'
+      preLoaderRoute: typeof AlbumsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/albums/$id': {
+      id: '/albums/$id'
+      path: '/albums/$id'
+      fullPath: '/albums/$id'
+      preLoaderRoute: typeof AlbumsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/bookmark/$id': {
       id: '/bookmark/$id'
       path: '/bookmark/$id'
       fullPath: '/bookmark/$id'
       preLoaderRoute: typeof BookmarkIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/albums/join/$id': {
+      id: '/albums/join/$id'
+      path: '/albums/join/$id'
+      fullPath: '/albums/join/$id'
+      preLoaderRoute: typeof AlbumsJoinIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -124,7 +200,10 @@ const rootRouteChildren: RootRouteChildren = {
   CalendarRoute: CalendarRoute,
   FavoritesRoute: FavoritesRoute,
   JobsRoute: JobsRoute,
+  AlbumsIdRoute: AlbumsIdRoute,
   BookmarkIdRoute: BookmarkIdRoute,
+  AlbumsIndexRoute: AlbumsIndexRoute,
+  AlbumsJoinIdRoute: AlbumsJoinIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,6 +1,6 @@
 # Pocket
 
-A mobile-first bookmark vault: save links from X, Reddit, Instagram, articles, or job postings, and find them again fast. Job bookmarks get a company/role/deadline field and a countdown that turns amber then red as the application window closes.
+A mobile-first bookmark vault: save links from X, Reddit, Instagram, articles, or job postings, and find them again fast. Job bookmarks get a company/role/deadline field and a countdown that turns amber then red as the application window closes. Shared albums let two or more people collaborate on one list — everyone adds bookmarks and sees the same deadline alerts.
 
 Built with TanStack Start, React 19, Tailwind CSS v4, and Appwrite (database + auth). Bookmarks work fully offline in the browser's local storage; signing in with Google backs them up and syncs them across devices.
 
@@ -23,16 +23,32 @@ Built with TanStack Start, React 19, Tailwind CSS v4, and Appwrite (database + a
    | `tags` | String, array | No |
    | `applied`, `favorite` | Boolean | Yes (default `false`) |
 
-   No `userId` field is needed — per-document permissions (set automatically when a bookmark is created) already scope each document to its owner.
+   No `userId` field is needed — per-document permissions (set automatically when a bookmark is created) already scope each document to its owner. Under this collection's **Settings → Permissions**, grant the `Users` role **Create** only (leave Read/Update/Delete unchecked — those come from each document's own permissions).
+
+   Add one more attribute for shared albums:
+
+   | Attribute | Type | Required |
+   |---|---|---|
+   | `albumId` | String | No |
+
+   Then create a second collection called `albums`, also with **Document Security** turned on, same `Users` role with **Create** only:
+
+   | Attribute | Type | Required |
+   |---|---|---|
+   | `name`, `emoji`, `teamId`, `ownerId`, `ownerName` | String | Yes |
+
+   Shared albums use Appwrite's built-in **Teams** feature (no setup needed — every project has it) so that anyone who joins later automatically gets access to everything already saved. Joining happens via a shareable link (`/albums/join/:id`) rather than an emailed invite — see the next step.
 
 4. **Enable Google sign-in** (optional — the app works fully without an account) — under *Auth → Settings*, enable the **Google** OAuth provider with a Client ID/Secret from a Google Cloud OAuth app. Appwrite's provider page shows you the exact redirect URI to register in Google Cloud Console.
 
-5. **Configure environment variables** — copy `.env.example` to `.env` and fill in your project's endpoint, project ID, database ID, and collection ID (all visible in the Appwrite console):
+5. **Create an API key for instant album joins** — under *Overview → Integrate with your server* (or *Project Settings → API Keys*), create a key with just the **teams.write** scope. This lets the app add someone to an album's team the moment they open an invite link, with no email confirmation step. Keep this key server-side only.
+
+6. **Configure environment variables** — copy `.env.example` to `.env` and fill in your project's endpoint, project ID, database ID, both collection IDs, and the API key from the previous step (all visible in the Appwrite console):
    ```sh
    cp .env.example .env
    ```
 
-6. **Run it**
+7. **Run it**
    ```sh
    bun dev
    ```
