@@ -1,9 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowLeft, CheckCircle2, ExternalLink, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ExternalLink, Pencil, Share2, Star, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { PhoneShell } from "@/components/PhoneShell";
 import { AddBookmarkSheet } from "@/components/AddBookmarkSheet";
 import { DeadlinePill } from "@/components/DeadlinePill";
+import { shareBookmarks } from "@/lib/share";
 import { Button } from "@/components/ui/button";
 import { useBookmarks } from "@/hooks/use-bookmarks";
 import {
@@ -52,13 +54,26 @@ function Detail() {
 
   return (
     <PhoneShell onAdd={() => setEditing(true)}>
-      <button
-        type="button"
-        onClick={() => navigate({ to: "/" })}
-        className="mb-4 flex min-h-11 items-center gap-2 text-sm text-muted-foreground"
-      >
-        <ArrowLeft className="size-4" /> Library
-      </button>
+      <div className="mb-4 flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => navigate({ to: "/" })}
+          className="flex min-h-11 items-center gap-2 text-sm text-muted-foreground"
+        >
+          <ArrowLeft className="size-4" /> Library
+        </button>
+        <button
+          type="button"
+          aria-label={bookmark.favorite ? "Remove from favorites" : "Add to favorites"}
+          aria-pressed={bookmark.favorite ? true : false}
+          onClick={() => update(bookmark.id, { favorite: !bookmark.favorite })}
+          className="glass grid size-11 place-items-center rounded-full"
+        >
+          <Star
+            className={`size-4 ${bookmark.favorite ? "fill-warn text-warn" : "text-muted-foreground"}`}
+          />
+        </button>
+      </div>
 
       {bookmark.image && (
         <img
@@ -141,6 +156,17 @@ function Detail() {
         >
           <ExternalLink className="size-4" /> Open link
         </a>
+        <Button
+          variant="secondary"
+          className="h-12 w-full rounded-2xl"
+          onClick={async () => {
+            const r = await shareBookmarks([bookmark]);
+            if (r === "copied") toast("Copied to clipboard — paste it in any chat.");
+            if (r === "failed") toast("Couldn't share this right now.");
+          }}
+        >
+          <Share2 className="mr-1 size-4" /> Share
+        </Button>
         <div className="flex gap-2">
           <Button variant="secondary" className="h-12 flex-1 rounded-2xl" onClick={() => setEditing(true)}>
             <Pencil className="mr-1 size-4" /> Edit

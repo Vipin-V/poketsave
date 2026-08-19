@@ -17,6 +17,7 @@ export type Bookmark = {
   role?: string | undefined;
   deadline?: string | undefined; // yyyy-mm-dd
   applied?: boolean | undefined;
+  favorite?: boolean | undefined;
 };
 
 export const CATEGORIES: { value: Category; label: string }[] = [
