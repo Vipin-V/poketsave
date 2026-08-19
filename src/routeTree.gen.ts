@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as FavoritesRouteImport } from './routes/favorites'
 import { Route as JobsRouteImport } from './routes/jobs'
 import { Route as BookmarkIdRouteImport } from './routes/bookmark.$id'
@@ -17,6 +18,11 @@ import { Route as BookmarkIdRouteImport } from './routes/bookmark.$id'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CalendarRoute = CalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FavoritesRoute = FavoritesRouteImport.update({
@@ -37,12 +43,14 @@ const BookmarkIdRoute = BookmarkIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/calendar': typeof CalendarRoute
   '/favorites': typeof FavoritesRoute
   '/jobs': typeof JobsRoute
   '/bookmark/$id': typeof BookmarkIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/calendar': typeof CalendarRoute
   '/favorites': typeof FavoritesRoute
   '/jobs': typeof JobsRoute
   '/bookmark/$id': typeof BookmarkIdRoute
@@ -50,20 +58,22 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/calendar': typeof CalendarRoute
   '/favorites': typeof FavoritesRoute
   '/jobs': typeof JobsRoute
   '/bookmark/$id': typeof BookmarkIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/favorites' | '/jobs' | '/bookmark/$id'
+  fullPaths: '/' | '/calendar' | '/favorites' | '/jobs' | '/bookmark/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/favorites' | '/jobs' | '/bookmark/$id'
-  id: '__root__' | '/' | '/favorites' | '/jobs' | '/bookmark/$id'
+  to: '/' | '/calendar' | '/favorites' | '/jobs' | '/bookmark/$id'
+  id: '__root__' | '/' | '/calendar' | '/favorites' | '/jobs' | '/bookmark/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CalendarRoute: typeof CalendarRoute
   FavoritesRoute: typeof FavoritesRoute
   JobsRoute: typeof JobsRoute
   BookmarkIdRoute: typeof BookmarkIdRoute
@@ -76,6 +86,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/calendar': {
+      id: '/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof CalendarRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/favorites': {
@@ -104,6 +121,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CalendarRoute: CalendarRoute,
   FavoritesRoute: FavoritesRoute,
   JobsRoute: JobsRoute,
   BookmarkIdRoute: BookmarkIdRoute,
