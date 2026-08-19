@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Bookmark, Briefcase, Plus } from "lucide-react";
+import { Bookmark, Briefcase, Plus, Star } from "lucide-react";
 import type { ReactNode } from "react";
 
 export function PhoneShell({
@@ -24,8 +24,14 @@ export function PhoneShell({
         className="fixed inset-x-0 bottom-0 z-40 mx-auto w-full max-w-[26rem] px-4"
         style={{ paddingBottom: "max(0.85rem, env(safe-area-inset-bottom))" }}
       >
-        <div className="glass-strong flex items-center justify-between rounded-3xl px-3 py-2 shadow-2xl">
+        <div className="glass-strong flex items-center justify-between rounded-3xl px-2 py-2 shadow-2xl">
           <TabLink to="/" active={pathname === "/"} icon={<Bookmark className="size-5" />} label="Library" />
+          <TabLink
+            to="/favorites"
+            active={pathname.startsWith("/favorites")}
+            icon={<Star className="size-5" />}
+            label="Favorites"
+          />
           <button
             type="button"
             onClick={onAdd}
