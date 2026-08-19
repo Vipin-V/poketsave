@@ -54,13 +54,26 @@ function Detail() {
 
   return (
     <PhoneShell onAdd={() => setEditing(true)}>
-      <button
-        type="button"
-        onClick={() => navigate({ to: "/" })}
-        className="mb-4 flex min-h-11 items-center gap-2 text-sm text-muted-foreground"
-      >
-        <ArrowLeft className="size-4" /> Library
-      </button>
+      <div className="mb-4 flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => navigate({ to: "/" })}
+          className="flex min-h-11 items-center gap-2 text-sm text-muted-foreground"
+        >
+          <ArrowLeft className="size-4" /> Library
+        </button>
+        <button
+          type="button"
+          aria-label={bookmark.favorite ? "Remove from favorites" : "Add to favorites"}
+          aria-pressed={bookmark.favorite ? true : false}
+          onClick={() => update(bookmark.id, { favorite: !bookmark.favorite })}
+          className="glass grid size-11 place-items-center rounded-full"
+        >
+          <Star
+            className={`size-4 ${bookmark.favorite ? "fill-warn text-warn" : "text-muted-foreground"}`}
+          />
+        </button>
+      </div>
 
       {bookmark.image && (
         <img
