@@ -1,4 +1,6 @@
 import { Link } from "@tanstack/react-router";
+import { Star } from "lucide-react";
+import { toast } from "sonner";
 import {
   categoryLabel,
   daysLeft,
@@ -7,17 +9,35 @@ import {
   urgencyOf,
   type Bookmark,
 } from "@/lib/bookmarks";
+import { useBookmarks } from "@/hooks/use-bookmarks";
 import { DeadlinePill } from "./DeadlinePill";
 
 export function BookmarkCard({ bookmark }: { bookmark: Bookmark }) {
   const days = bookmark.deadline ? daysLeft(bookmark.deadline) : null;
+  const { update } = useBookmarks();
 
   return (
     <Link
       to="/bookmark/$id"
       params={{ id: bookmark.id }}
-      className="glass block rounded-2xl p-3.5 transition-transform active:scale-[0.985]"
+      className="glass relative block rounded-2xl p-3.5 transition-transform active:scale-[0.985]"
     >
+      <button
+        type="button"
+        aria-label={bookmark.favorite ? "Remove from favorites" : "Add to favorites"}
+        aria-pressed={bookmark.favorite ? true : false}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          update(bookmark.id, { favorite: !bookmark.favorite });
+          toast(bookmark.favorite ? "Removed from favorites" : "Added to favorites");
+        }}
+        className="absolute top-2 right-2 grid size-9 place-items-center rounded-full"
+      >
+        <Star
+          className={`size-4 ${bookmark.favorite ? "fill-warn text-warn" : "text-muted-foreground"}`}
+        />
+      </button>
       <div className="flex gap-3">
         <img
           src={bookmark.favicon || faviconFor(bookmark.domain)}
