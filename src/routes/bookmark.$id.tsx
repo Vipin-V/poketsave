@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { ArrowLeft, CheckCircle2, ExternalLink, Pencil, Share2, Star, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { PhoneShell } from "@/components/PhoneShell";
@@ -204,7 +204,7 @@ function IconAction({
   destructive,
 }: {
   label: string;
-  children: React.ReactNode;
+  children: ReactNode;
   onClick: () => void;
   destructive?: boolean;
 }) {
