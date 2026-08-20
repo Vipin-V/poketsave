@@ -11,7 +11,7 @@ import { CATEGORIES, daysLeft, type Category } from "@/lib/bookmarks";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "PoketSave — Save links, never lose a job deadline" },
+      { title: "PoketSave" },
       {
         name: "description",
         content:

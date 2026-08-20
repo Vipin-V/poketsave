@@ -78,7 +78,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         name: "viewport",
         content: "width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1",
       },
-      { title: "PoketSave — Save links, never lose a job deadline" },
+      { title: "PoketSave" },
       {
         name: "description",
         content:
