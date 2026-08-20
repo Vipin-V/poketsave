@@ -39,8 +39,11 @@ const dotColor: Record<string, string> = {
 };
 
 function CalendarView() {
-  const { bookmarks, ready, add } = useBookmarks();
+  const { bookmarks: allBookmarks, ready, add } = useBookmarks();
   const [open, setOpen] = useState(false);
+
+  // Album bookmarks live under Albums, not here.
+  const bookmarks = useMemo(() => allBookmarks.filter((b) => !b.albumId), [allBookmarks]);
   const today = new Date();
   const [cursor, setCursor] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [selected, setSelected] = useState<string | null>(iso(today));

@@ -27,8 +27,11 @@ export const Route = createFileRoute("/jobs")({
 });
 
 function Jobs() {
-  const { bookmarks, ready, add } = useBookmarks();
+  const { bookmarks: allBookmarks, ready, add } = useBookmarks();
   const [open, setOpen] = useState(false);
+
+  // Album bookmarks live under Albums, not here.
+  const bookmarks = useMemo(() => allBookmarks.filter((b) => !b.albumId), [allBookmarks]);
 
   const { active, rest } = useMemo(() => {
     const jobs = bookmarks.filter((b) => b.category === "job");

@@ -1,13 +1,26 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
-import { ArrowLeft, CheckCircle2, ExternalLink, Pencil, Share2, Star, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  ExternalLink,
+  FolderPlus,
+  Pencil,
+  Share2,
+  Star,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { PhoneShell } from "@/components/PhoneShell";
 import { AddBookmarkSheet } from "@/components/AddBookmarkSheet";
 import { DeadlinePill } from "@/components/DeadlinePill";
 import { shareBookmarks } from "@/lib/share";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useBookmarks } from "@/hooks/use-bookmarks";
+import { useAlbums } from "@/hooks/use-albums";
+import { useAuth } from "@/hooks/use-auth";
+import type { Album } from "@/lib/albums";
 import {
   categoryLabel,
   daysLeft,
@@ -31,9 +44,29 @@ export const Route = createFileRoute("/bookmark/$id")({
 function Detail() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
-  const { bookmarks, ready, update, remove } = useBookmarks();
+  const { bookmarks, ready, update, remove, add } = useBookmarks();
+  const { user } = useAuth();
+  const { albums } = useAlbums();
   const [editing, setEditing] = useState(false);
+  const [albumPickerOpen, setAlbumPickerOpen] = useState(false);
   const bookmark = bookmarks.find((b) => b.id === id);
+
+  function addToAlbum(album: Album) {
+    if (!bookmark) return;
+    add(
+      {
+        ...bookmark,
+        id: crypto.randomUUID(),
+        albumId: album.id,
+        createdAt: new Date().toISOString(),
+        canDelete: undefined,
+      },
+      album.teamId,
+      album.ownerId,
+    );
+    toast(`Added to "${album.name}"`);
+    setAlbumPickerOpen(false);
+  }
 
   if (!bookmark) {
     return (
@@ -170,6 +203,11 @@ function Detail() {
         >
           <Share2 className="size-4" />
         </IconAction>
+        {user && albums.length > 0 && (
+          <IconAction label="Add to album" onClick={() => setAlbumPickerOpen(true)}>
+            <FolderPlus className="size-4" />
+          </IconAction>
+        )}
         <IconAction label="Edit" onClick={() => setEditing(true)}>
           <Pencil className="size-4" />
         </IconAction>
@@ -195,6 +233,34 @@ function Detail() {
           onSave={(b) => update(b.id, b)}
         />
       )}
+
+      <Sheet open={albumPickerOpen} onOpenChange={setAlbumPickerOpen}>
+        <SheetContent
+          side="bottom"
+          className="glass-strong mx-auto max-h-[70dvh] w-full max-w-[26rem] overflow-y-auto rounded-t-3xl border-border px-4 pb-8"
+        >
+          <SheetHeader className="px-0">
+            <SheetTitle className="font-display text-xl">Add to album</SheetTitle>
+          </SheetHeader>
+          <div className="space-y-2 pt-2">
+            {albums.map((album) => (
+              <button
+                key={album.id}
+                type="button"
+                onClick={() => addToAlbum(album)}
+                className="glass flex w-full items-center gap-3 rounded-2xl p-3 text-left transition-transform active:scale-[0.985]"
+              >
+                <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-secondary text-lg">
+                  {album.emoji}
+                </div>
+                <span className="min-w-0 flex-1 truncate text-sm font-semibold">
+                  {album.name}
+                </span>
+              </button>
+            ))}
+          </div>
+        </SheetContent>
+      </Sheet>
     </PhoneShell>
   );
 }

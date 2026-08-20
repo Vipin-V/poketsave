@@ -12,6 +12,7 @@ import type { ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
 import { BookmarksProvider } from "@/hooks/use-bookmarks";
+import { AlbumsProvider } from "@/hooks/use-albums";
 
 
 function NotFoundComponent() {
@@ -129,11 +130,13 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <BookmarksProvider>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
-        <Toaster position="top-center" />
-      </BookmarksProvider>
+      <AlbumsProvider>
+        <BookmarksProvider>
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <Outlet />
+          <Toaster position="top-center" />
+        </BookmarksProvider>
+      </AlbumsProvider>
     </QueryClientProvider>
   );
 

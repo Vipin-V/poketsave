@@ -27,9 +27,11 @@ export const Route = createFileRoute("/favorites")({
 });
 
 function Favorites() {
-  const { bookmarks, ready, add } = useBookmarks();
+  const { bookmarks: allBookmarks, ready, add } = useBookmarks();
   const [open, setOpen] = useState(false);
 
+  // Album bookmarks live under Albums, not here.
+  const bookmarks = useMemo(() => allBookmarks.filter((b) => !b.albumId), [allBookmarks]);
   const favorites = useMemo(() => bookmarks.filter((b) => b.favorite), [bookmarks]);
 
   return (

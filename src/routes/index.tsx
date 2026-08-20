@@ -28,10 +28,14 @@ export const Route = createFileRoute("/")({
 });
 
 function Library() {
-  const { bookmarks, ready, add } = useBookmarks();
+  const { bookmarks: allBookmarks, ready, add } = useBookmarks();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Category | "all">("all");
+
+  // Album bookmarks live under Albums, not here — otherwise adding one to an
+  // album would make it show up twice: once in the album, once in Library.
+  const bookmarks = useMemo(() => allBookmarks.filter((b) => !b.albumId), [allBookmarks]);
 
   const expiring = useMemo(
     () =>

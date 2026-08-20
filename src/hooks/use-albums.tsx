@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { ID, Permission, Query, Role, type Models } from "appwrite";
@@ -35,7 +42,23 @@ function docToAlbum(doc: AlbumDoc): Album {
   };
 }
 
-export function useAlbums() {
+type AlbumsApi = {
+  albums: Album[];
+  memberCounts: Record<string, number>;
+  ready: boolean;
+  create: (name: string, emoji: string) => Promise<Album>;
+  join: (teamId: string) => Promise<void>;
+  remove: (album: Album) => Promise<void>;
+  leave: (album: Album) => Promise<void>;
+};
+
+const AlbumsContext = createContext<AlbumsApi | null>(null);
+
+// Fetches and subscribes exactly once for the whole app — mirrors
+// BookmarksProvider, so anything that needs the album list (the albums
+// pages, and an "add to album" picker inside a bookmark card) reads from
+// one shared instance instead of each mount running its own fetch.
+export function AlbumsProvider({ children }: { children: ReactNode }) {
   const { user, ready: authReady } = useAuth();
   const [albums, setAlbums] = useState<Album[]>([]);
   const [memberCounts, setMemberCounts] = useState<Record<string, number>>({});
@@ -169,5 +192,15 @@ export function useAlbums() {
     [user],
   );
 
-  return { albums, memberCounts, ready, create, join, remove, leave };
+  return (
+    <AlbumsContext.Provider value={{ albums, memberCounts, ready, create, join, remove, leave }}>
+      {children}
+    </AlbumsContext.Provider>
+  );
+}
+
+export function useAlbums(): AlbumsApi {
+  const ctx = useContext(AlbumsContext);
+  if (!ctx) throw new Error("useAlbums must be used within an AlbumsProvider");
+  return ctx;
 }
