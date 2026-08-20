@@ -1,6 +1,23 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Bookmark, Briefcase, CalendarDays, Plus, Star, Users } from "lucide-react";
-import type { ReactNode } from "react";
+import {
+  Bookmark,
+  Briefcase,
+  CalendarDays,
+  Coffee,
+  Menu,
+  Plus,
+  Star,
+  User,
+  Users,
+} from "lucide-react";
+import { useState, type ReactNode } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { AccountButton } from "./AccountButton";
 
 const TABS = [
@@ -16,12 +33,21 @@ const TABS = [
   },
 ] as const;
 
-export function PhoneShell({ children, onAdd }: { children: ReactNode; onAdd: () => void }) {
+export function PhoneShell({
+  children,
+  onAdd,
+  hideMenu,
+}: {
+  children: ReactNode;
+  onAdd: () => void;
+  // Pages that render their own hamburger menu (e.g. an album's) set this so
+  // this global one doesn't also show up alongside it.
+  hideMenu?: boolean;
+}) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const left = TABS.slice(0, 2);
   const right = TABS.slice(3);
-  const saved = TABS[2];
-  const SavedIcon = saved.icon;
+  const [accountOpen, setAccountOpen] = useState(false);
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-[26rem] flex-col">
@@ -29,18 +55,44 @@ export function PhoneShell({ children, onAdd }: { children: ReactNode; onAdd: ()
         className="flex-1 px-4 pb-40"
         style={{ paddingTop: "max(1rem, env(safe-area-inset-top))" }}
       >
-        <div className="mb-3 flex items-center justify-between">
-          <Link
-            to="/favorites"
-            aria-label="Saved"
-            className={`glass grid size-11 place-items-center rounded-full ${
-              saved.match(pathname) ? "text-primary" : "text-muted-foreground"
-            }`}
-          >
-            <SavedIcon className="size-4" />
-          </Link>
-          <AccountButton />
-        </div>
+        {!hideMenu && (
+          <div className="mb-3 flex items-center justify-end">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="Menu"
+                  className="glass grid size-11 place-items-center rounded-full"
+                >
+                  <Menu className="size-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="w-56 rounded-2xl border-border bg-popover p-1.5 text-popover-foreground"
+              >
+                <DropdownMenuItem
+                  onClick={() => setAccountOpen(true)}
+                  className="gap-2 rounded-xl py-2.5 focus:bg-accent"
+                >
+                  <User className="size-4 text-primary" /> Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="gap-2 rounded-xl py-2.5 focus:bg-accent">
+                  <Link to="/favorites">
+                    <Star className="size-4 text-primary" /> Favourites
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild className="gap-2 rounded-xl py-2.5 focus:bg-accent">
+                  <a href="https://buymeacoffee.com/vipinv" target="_blank" rel="noreferrer">
+                    <Coffee className="size-4 text-warn" /> Support developer
+                  </a>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <AccountButton open={accountOpen} onOpenChange={setAccountOpen} hideTrigger />
+          </div>
+        )}
         {children}
       </main>
 

@@ -60,10 +60,12 @@ function JoinAlbum() {
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-[26rem] flex-col items-center justify-center px-4 text-center">
       <div className="glass-strong w-full rounded-3xl px-6 py-10">
-        {!authReady || status === "loading" ? (
+        {!authReady ? (
           <Loader2 className="mx-auto size-6 animate-spin text-primary" />
         ) : !user ? (
           <SignInToJoin />
+        ) : status === "loading" ? (
+          <Loader2 className="mx-auto size-6 animate-spin text-primary" />
         ) : status === "error" ? (
           <>
             <XCircle className="mx-auto size-8 text-destructive" />

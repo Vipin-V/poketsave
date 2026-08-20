@@ -8,9 +8,19 @@ import { Button } from "@/components/ui/button";
 import { account, isAppwriteConfigured } from "@/integrations/appwrite/client";
 import { useAuth } from "@/hooks/use-auth";
 
-export function AccountButton() {
+type Props = {
+  // Lets a parent (e.g. a menu item) open the account sheet itself instead
+  // of relying on the built-in trigger button.
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
+};
+
+export function AccountButton({ open: openProp, onOpenChange, hideTrigger }: Props = {}) {
   const { user, ready } = useAuth();
-  const [open, setOpen] = useState(false);
+  const [openState, setOpenState] = useState(false);
+  const open = openProp ?? openState;
+  const setOpen = onOpenChange ?? setOpenState;
   const [signingIn, setSigningIn] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
 
@@ -47,22 +57,24 @@ export function AccountButton() {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-label={user ? "Account" : "Sign in"}
-        className="glass grid size-11 shrink-0 place-items-center overflow-hidden rounded-full"
-      >
-        {ready && user ? (
-          <Avatar className="size-11">
-            <AvatarFallback className="bg-transparent text-xs font-semibold text-primary">
-              {name.slice(0, 1).toUpperCase() || "?"}
-            </AvatarFallback>
-          </Avatar>
-        ) : (
-          <UserIcon className="size-4 text-muted-foreground" />
-        )}
-      </button>
+      {!hideTrigger && (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label={user ? "Account" : "Sign in"}
+          className="glass grid size-11 shrink-0 place-items-center overflow-hidden rounded-full"
+        >
+          {ready && user ? (
+            <Avatar className="size-11">
+              <AvatarFallback className="bg-transparent text-xs font-semibold text-primary">
+                {name.slice(0, 1).toUpperCase() || "?"}
+              </AvatarFallback>
+            </Avatar>
+          ) : (
+            <UserIcon className="size-4 text-muted-foreground" />
+          )}
+        </button>
+      )}
 
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent
