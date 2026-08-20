@@ -6,6 +6,7 @@ import { BookmarkCard } from "@/components/BookmarkCard";
 import { AddBookmarkSheet } from "@/components/AddBookmarkSheet";
 import { ShareButton } from "@/components/ShareButton";
 import { useBookmarks } from "@/hooks/use-bookmarks";
+import { dedupeByUrl } from "@/lib/album-visibility";
 
 export const Route = createFileRoute("/favorites")({
   head: () => ({
@@ -30,8 +31,9 @@ function Favorites() {
   const { bookmarks: allBookmarks, ready, add } = useBookmarks();
   const [open, setOpen] = useState(false);
 
-  // Album bookmarks live under Albums, not here.
-  const bookmarks = useMemo(() => allBookmarks.filter((b) => !b.albumId), [allBookmarks]);
+  // Favoriting is per-bookmark, so album bookmarks count too — just dedupe by
+  // url in case the same link exists both personally and inside an album.
+  const bookmarks = useMemo(() => dedupeByUrl(allBookmarks), [allBookmarks]);
   const favorites = useMemo(() => bookmarks.filter((b) => b.favorite), [bookmarks]);
 
   return (

@@ -6,6 +6,7 @@ import { AddBookmarkSheet } from "@/components/AddBookmarkSheet";
 import { ShareButton } from "@/components/ShareButton";
 import { useBookmarks } from "@/hooks/use-bookmarks";
 import { daysLeft } from "@/lib/bookmarks";
+import { dedupeByUrl } from "@/lib/album-visibility";
 
 export const Route = createFileRoute("/jobs")({
   head: () => ({
@@ -30,8 +31,10 @@ function Jobs() {
   const { bookmarks: allBookmarks, ready, add } = useBookmarks();
   const [open, setOpen] = useState(false);
 
-  // Album bookmarks live under Albums, not here.
-  const bookmarks = useMemo(() => allBookmarks.filter((b) => !b.albumId), [allBookmarks]);
+  // Job/internship deadlines are per-bookmark, so album bookmarks count too —
+  // just dedupe by url in case the same link exists both personally and
+  // inside an album.
+  const bookmarks = useMemo(() => dedupeByUrl(allBookmarks), [allBookmarks]);
 
   const { active, rest } = useMemo(() => {
     const jobs = bookmarks.filter((b) => b.category === "job" || b.category === "internship");

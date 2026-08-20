@@ -21,7 +21,7 @@ import {
 import { AccountButton } from "./AccountButton";
 
 const TABS = [
-  { to: "/", icon: Bookmark, label: "Library", match: (p: string) => p === "/" },
+  { to: "/", icon: Bookmark, label: "Self", match: (p: string) => p === "/" },
   { to: "/albums", icon: Users, label: "Albums", match: (p: string) => p.startsWith("/albums") },
   { to: "/favorites", icon: Star, label: "Saved", match: (p: string) => p.startsWith("/favorites") },
   { to: "/jobs", icon: Briefcase, label: "Jobs", match: (p: string) => p.startsWith("/jobs") },
