@@ -196,3 +196,28 @@ function Detail() {
     </PhoneShell>
   );
 }
+
+function IconAction({
+  label,
+  children,
+  onClick,
+  destructive,
+}: {
+  label: string;
+  children: React.ReactNode;
+  onClick: () => void;
+  destructive?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      className={`glass grid size-12 shrink-0 place-items-center rounded-2xl transition-transform active:scale-90 ${
+        destructive ? "text-destructive" : "text-muted-foreground"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
