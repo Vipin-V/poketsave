@@ -6,9 +6,29 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { account, isAppwriteConfigured } from "@/integrations/appwrite/client";
 import { useAuth } from "@/hooks/use-auth";
-import { disableDeadlineAlerts, enableDeadlineAlerts } from "@/lib/push";
+import {
+  DEFAULT_NOTIFY_HOUR_UTC,
+  disableDeadlineAlerts,
+  enableDeadlineAlerts,
+  localHourToUtcHour,
+  setNotifyHour,
+  utcHourToLocalHour,
+} from "@/lib/push";
+
+function formatHour12(hour: number): string {
+  const period = hour < 12 ? "AM" : "PM";
+  const h = hour % 12 === 0 ? 12 : hour % 12;
+  return `${h}:00 ${period}`;
+}
 
 type Props = {
   // Lets a parent (e.g. a menu item) open the account sheet itself instead
@@ -27,12 +47,25 @@ export function AccountButton({ open: openProp, onOpenChange, hideTrigger }: Pro
   const [signingOut, setSigningOut] = useState(false);
   const [alertsOn, setAlertsOn] = useState(false);
   const [togglingAlerts, setTogglingAlerts] = useState(false);
+  const [notifyHourUtc, setNotifyHourUtc] = useState(DEFAULT_NOTIFY_HOUR_UTC);
 
   const name = user?.name || user?.email || "";
 
   useEffect(() => {
     setAlertsOn(Boolean(user?.prefs?.["pushSubscription"]));
+    setNotifyHourUtc(Number(user?.prefs?.["notifyHour"] ?? DEFAULT_NOTIFY_HOUR_UTC));
   }, [user]);
+
+  async function changeNotifyHour(localHour: number) {
+    if (!user) return;
+    const utcHour = localHourToUtcHour(localHour);
+    setNotifyHourUtc(utcHour);
+    try {
+      await setNotifyHour(user, utcHour);
+    } catch {
+      toast("Couldn't update notification time — try again.");
+    }
+  }
 
   async function toggleAlerts(checked: boolean) {
     if (!user) return;
@@ -42,7 +75,7 @@ export function AccountButton({ open: openProp, onOpenChange, hideTrigger }: Pro
         const result = await enableDeadlineAlerts(user);
         if (result === "enabled") {
           setAlertsOn(true);
-          toast("Deadline alerts on — 4 days and 1 day before a date arrives.");
+          toast("Deadline alerts on — 4 days before, 1 day before, and the day of.");
         } else if (result === "unsupported") {
           toast("Push notifications aren't supported in this browser.");
         } else if (result === "denied") {
@@ -133,21 +166,43 @@ export function AccountButton({ open: openProp, onOpenChange, hideTrigger }: Pro
                   <p className="text-xs text-muted-foreground">Synced with your Google account</p>
                 </div>
               </div>
-              <div className="glass mt-3 flex items-center gap-3 rounded-2xl p-3.5">
-                <div className="grid size-9 shrink-0 place-items-center rounded-full bg-primary/15 text-primary">
-                  <BellRing className="size-4" />
+              <div className="glass mt-3 rounded-2xl p-3.5">
+                <div className="flex items-center gap-3">
+                  <div className="grid size-9 shrink-0 place-items-center rounded-full bg-primary/15 text-primary">
+                    <BellRing className="size-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold">Deadline alerts</p>
+                    <p className="text-xs text-muted-foreground">
+                      Notify me 4 days before, 1 day before, and the day of a job, internship or
+                      event date
+                    </p>
+                  </div>
+                  <Switch
+                    checked={alertsOn}
+                    disabled={togglingAlerts}
+                    onCheckedChange={(checked) => void toggleAlerts(checked)}
+                  />
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold">Deadline alerts</p>
-                  <p className="text-xs text-muted-foreground">
-                    Notify me 4 days and 1 day before a job, internship or event date
-                  </p>
+                <div className="mt-3 flex items-center justify-between gap-3 border-t border-border pt-3">
+                  <p className="text-xs text-muted-foreground">Send alerts around</p>
+                  <Select
+                    value={String(utcHourToLocalHour(notifyHourUtc))}
+                    disabled={!alertsOn}
+                    onValueChange={(value) => void changeNotifyHour(Number(value))}
+                  >
+                    <SelectTrigger className="h-8 w-28 rounded-xl text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 24 }, (_, hour) => (
+                        <SelectItem key={hour} value={String(hour)}>
+                          {formatHour12(hour)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <Switch
-                  checked={alertsOn}
-                  disabled={togglingAlerts}
-                  onCheckedChange={(checked) => void toggleAlerts(checked)}
-                />
               </div>
               <Button
                 variant="secondary"

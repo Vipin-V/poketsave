@@ -2,16 +2,20 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { Client, Databases, Query, Users, type Models } from "node-appwrite";
 import webpush from "web-push";
 
-// Runs daily via Vercel Cron (see vercel.json). Finds every personal job,
-// internship or event bookmark whose deadline is exactly 4 or 1 days away
-// and pushes a notification to whoever saved it, if they've turned deadline
-// alerts on.
+// Runs hourly via Vercel Cron (see vercel.json). Finds every personal job,
+// internship or event bookmark whose deadline is exactly 4, 1 or 0 days
+// away and pushes a notification to whoever saved it, if they've turned
+// deadline alerts on — but only during the one hour of the day (UTC) they
+// chose, so each user gets notified once per matching bookmark per day
+// rather than on every hourly run.
 //
 // Scoped to personal bookmarks only: album bookmarks don't carry a single
 // owner, and the "show this album in my Calendar" preference is stored in
 // each member's own browser (localStorage), not on the server, so there's
 // no server-side way to know who opted an album in. Extending this to
 // albums would need that preference to move server-side first.
+
+const DEFAULT_NOTIFY_HOUR_UTC = 9;
 
 type BookmarkDoc = Models.Document & {
   category: string;
@@ -72,7 +76,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const databases = new Databases(client);
   const users = new Users(client);
 
-  const dueBookmarks: { doc: BookmarkDoc; ownerId: string; daysLeft: 4 | 1 }[] = [];
+  const dueBookmarks: { doc: BookmarkDoc; ownerId: string; daysLeft: 4 | 1 | 0 }[] = [];
   let cursor: string | undefined;
   for (;;) {
     const queries = [
@@ -91,7 +95,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     for (const doc of page.documents) {
       if (!doc.deadline) continue;
       const left = daysLeft(doc.deadline);
-      if (left !== 4 && left !== 1) continue;
+      if (left !== 4 && left !== 1 && left !== 0) continue;
       const ownerId = ownerIdFromPermissions(doc.$permissions);
       if (!ownerId) continue;
       dueBookmarks.push({ doc, ownerId, daysLeft: left });
@@ -117,14 +121,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const subscription = prefs?.["pushSubscription"] as webpush.PushSubscription | undefined;
     if (!subscription) continue;
 
+    const notifyHour = Number(prefs?.["notifyHour"] ?? DEFAULT_NOTIFY_HOUR_UTC);
+    if (new Date().getUTCHours() !== notifyHour) continue;
+
     const body =
       doc.category === "event"
-        ? left === 1
-          ? `Happening tomorrow — ${doc.deadline}`
-          : `Happening in ${left} days — ${doc.deadline}`
-        : left === 1
-          ? `Closes tomorrow — apply before ${doc.deadline}`
-          : `Closes in ${left} days — apply before ${doc.deadline}`;
+        ? left === 0
+          ? `Happening today — ${doc.deadline}`
+          : left === 1
+            ? `Happening tomorrow — ${doc.deadline}`
+            : `Happening in ${left} days — ${doc.deadline}`
+        : left === 0
+          ? `Last day to apply — ${doc.deadline}`
+          : left === 1
+            ? `Closes tomorrow — apply before ${doc.deadline}`
+            : `Closes in ${left} days — apply before ${doc.deadline}`;
 
     const payload = JSON.stringify({
       title: doc.title || "A saved link",

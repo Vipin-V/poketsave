@@ -48,3 +48,25 @@ export async function disableDeadlineAlerts(user: Models.User<Models.DefaultPref
   if (subscription) await subscription.unsubscribe();
   await account.updatePrefs({ ...user.prefs, pushSubscription: null });
 }
+
+// The cron job runs on UTC hours, so the user's chosen local hour is
+// converted to UTC before it's saved and converted back for display.
+// Matches the default the cron falls back to when a user has no
+// preference saved yet (see api/cron/deadline-notifications.ts).
+export const DEFAULT_NOTIFY_HOUR_UTC = 9;
+
+export function localHourToUtcHour(localHour: number): number {
+  const d = new Date();
+  d.setHours(localHour, 0, 0, 0);
+  return d.getUTCHours();
+}
+
+export function utcHourToLocalHour(utcHour: number): number {
+  const d = new Date();
+  d.setUTCHours(utcHour, 0, 0, 0);
+  return d.getHours();
+}
+
+export async function setNotifyHour(user: Models.User<Models.DefaultPreferences>, utcHour: number) {
+  await account.updatePrefs({ ...user.prefs, notifyHour: utcHour });
+}
