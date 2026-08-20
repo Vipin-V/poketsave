@@ -119,14 +119,18 @@ function Detail() {
               </span>
             </div>
           )}
-          <Button
-            variant={bookmark.applied ? "secondary" : "default"}
-            className="mt-1 h-11 w-full rounded-xl"
+          <button
+            type="button"
             onClick={() => update(bookmark.id, { applied: !bookmark.applied })}
+            className={`mt-1 inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-xs font-semibold transition-colors ${
+              bookmark.applied
+                ? "bg-primary/15 text-primary"
+                : "border border-border text-muted-foreground"
+            }`}
           >
-            <CheckCircle2 className="mr-1 size-4" />
-            {bookmark.applied ? "Marked as applied" : "Mark as applied"}
-          </Button>
+            <CheckCircle2 className="size-3.5" />
+            {bookmark.applied ? "Applied" : "Mark as applied"}
+          </button>
         </div>
       )}
 
@@ -147,41 +151,38 @@ function Detail() {
         </div>
       )}
 
-      <div className="mt-6 space-y-2">
+      <div className="mt-6 flex items-center gap-2">
         <a
           href={bookmark.url}
           target="_blank"
           rel="noreferrer"
-          className="neon-glow flex h-13 min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary text-base font-semibold text-primary-foreground"
+          className="neon-glow flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-primary text-[15px] font-semibold text-primary-foreground transition-transform active:scale-[0.98]"
         >
           <ExternalLink className="size-4" /> Open link
         </a>
-        <Button
-          variant="secondary"
-          className="h-12 w-full rounded-2xl"
+        <IconAction
+          label="Share"
           onClick={async () => {
             const r = await shareBookmarks([bookmark]);
             if (r === "copied") toast("Copied to clipboard — paste it in any chat.");
             if (r === "failed") toast("Couldn't share this right now.");
           }}
         >
-          <Share2 className="mr-1 size-4" /> Share
-        </Button>
-        <div className="flex gap-2">
-          <Button variant="secondary" className="h-12 flex-1 rounded-2xl" onClick={() => setEditing(true)}>
-            <Pencil className="mr-1 size-4" /> Edit
-          </Button>
-          <Button
-            variant="ghost"
-            className="h-12 flex-1 rounded-2xl text-destructive"
-            onClick={() => {
-              remove(bookmark.id);
-              navigate({ to: "/" });
-            }}
-          >
-            <Trash2 className="mr-1 size-4" /> Delete
-          </Button>
-        </div>
+          <Share2 className="size-4" />
+        </IconAction>
+        <IconAction label="Edit" onClick={() => setEditing(true)}>
+          <Pencil className="size-4" />
+        </IconAction>
+        <IconAction
+          label="Delete"
+          destructive
+          onClick={() => {
+            remove(bookmark.id);
+            navigate({ to: "/" });
+          }}
+        >
+          <Trash2 className="size-4" />
+        </IconAction>
       </div>
 
       {editing && (
