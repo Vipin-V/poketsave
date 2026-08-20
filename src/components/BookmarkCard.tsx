@@ -63,14 +63,16 @@ export function BookmarkCard({ bookmark }: { bookmark: Bookmark }) {
 
   return (
     <div className="relative overflow-hidden rounded-2xl">
-      <div
-        className={`absolute inset-0 flex items-center gap-2 rounded-2xl pl-5 text-sm font-semibold transition-colors ${
-          armed ? "bg-destructive text-destructive-foreground" : "bg-destructive/25 text-destructive"
-        }`}
-      >
-        <Trash2 className="size-4" />
-        {armed ? "Release to delete" : "Swipe to delete"}
-      </div>
+      {dx > 0 && (
+        <div
+          className={`absolute inset-0 flex items-center gap-2 rounded-2xl pl-5 text-sm font-semibold transition-colors ${
+            armed ? "bg-destructive text-destructive-foreground" : "bg-destructive/25 text-destructive"
+          }`}
+        >
+          <Trash2 className="size-4" />
+          {armed ? "Release to delete" : "Swipe to delete"}
+        </div>
+      )}
 
       <div
         className="relative"
