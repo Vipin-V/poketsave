@@ -234,7 +234,7 @@ export function AccountButton({ open: openProp, onOpenChange, hideTrigger }: Pro
                 {[
                   "Bookmarks and job deadlines on every device",
                   "Nothing lost if you clear your browser",
-                  "Shared albums with friends",
+                  "Shared bookmarks with friends",
                 ].map((line) => (
                   <li key={line} className="flex items-center gap-2.5 text-sm">
                     <Check className="size-4 shrink-0 text-primary" />

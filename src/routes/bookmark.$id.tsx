@@ -79,7 +79,7 @@ function Detail() {
           <h1 className="text-lg font-semibold">{ready ? "Bookmark not found" : "Loading…"}</h1>
           {ready && (
             <Button variant="secondary" className="mt-4" onClick={() => navigate({ to: "/" })}>
-              Back to library
+              Back to self
             </Button>
           )}
         </div>
@@ -99,7 +99,7 @@ function Detail() {
           onClick={() => navigate({ to: "/" })}
           className="flex min-h-11 items-center gap-2 text-sm text-muted-foreground"
         >
-          <ArrowLeft className="size-4" /> Library
+          <ArrowLeft className="size-4" /> Self
         </button>
         <button
           type="button"
@@ -287,7 +287,7 @@ function Detail() {
           <Share2 className="size-4" />
         </IconAction>
         {user && albums.length > 0 && (
-          <IconAction label="Add to album" onClick={() => setAlbumPickerOpen(true)}>
+          <IconAction label="Add to shared bookmarks" onClick={() => setAlbumPickerOpen(true)}>
             <FolderPlus className="size-4" />
           </IconAction>
         )}
@@ -323,7 +323,7 @@ function Detail() {
           className="glass-strong mx-auto max-h-[70dvh] w-full max-w-[26rem] overflow-y-auto rounded-t-3xl border-border px-4 pb-8"
         >
           <SheetHeader className="px-0">
-            <SheetTitle className="font-display text-xl">Add to album</SheetTitle>
+            <SheetTitle className="font-display text-xl">Add to shared bookmarks</SheetTitle>
           </SheetHeader>
           <div className="space-y-2 pt-2">
             {albums.map((album) => (

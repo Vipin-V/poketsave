@@ -16,7 +16,7 @@ import { useAlbums } from "@/hooks/use-albums";
 
 export const Route = createFileRoute("/albums/join/$id")({
   head: () => ({
-    meta: [{ title: "Join album — PoketSave" }],
+    meta: [{ title: "Join shared bookmarks — PoketSave" }],
   }),
   component: JoinAlbum,
 });
@@ -87,8 +87,8 @@ function JoinAlbum() {
             </div>
             <h1 className="mt-3 text-lg font-semibold">Join "{album.name}"?</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              You'll see every bookmark already saved here, and everyone in the album will see what
-              you add.
+              You'll see every bookmark already saved here, and everyone in this shared bookmarks
+              list will see what you add.
             </p>
             <Button
               className="neon-glow mt-5 h-12 w-full rounded-2xl text-sm font-semibold"
@@ -96,7 +96,7 @@ function JoinAlbum() {
               disabled={status === "joining"}
             >
               {status === "joining" ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
-              Join album
+              Join shared bookmarks
             </Button>
           </>
         ) : null}
@@ -131,7 +131,7 @@ function SignInToJoin() {
       <Users className="mx-auto size-6 text-muted-foreground" />
       <h1 className="mt-3 text-lg font-semibold">Sign in to join</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        You need an account to see and add to this shared album.
+        You need an account to see and add to this shared bookmarks list.
       </p>
       <Button
         className="neon-glow mt-5 h-12 w-full rounded-2xl text-sm font-semibold"

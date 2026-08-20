@@ -85,7 +85,7 @@ export function AlbumsProvider({ children }: { children: ReactNode }) {
         setAlbums(docs.documents.map(docToAlbum));
         setMemberCounts(Object.fromEntries(teamList.teams.map((t) => [t.$id, t.total])));
       } catch {
-        if (!cancelled) toast("Couldn't load your albums.");
+        if (!cancelled) toast("Couldn't load your shared bookmarks.");
       } finally {
         if (!cancelled) setReady(true);
       }

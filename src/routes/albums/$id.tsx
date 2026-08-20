@@ -39,8 +39,11 @@ import { useBookmarks } from "@/hooks/use-bookmarks";
 export const Route = createFileRoute("/albums/$id")({
   head: () => ({
     meta: [
-      { title: "Shared album — PoketSave" },
-      { name: "description", content: "Bookmarks saved to this shared album, and who's in it." },
+      { title: "Shared bookmarks — PoketSave" },
+      {
+        name: "description",
+        content: "Bookmarks saved to this shared bookmarks list, and who's in it.",
+      },
     ],
   }),
   component: AlbumDetail,
@@ -81,9 +84,7 @@ function AlbumDetail() {
     if (!album) return;
     setInLibrary(checked);
     setAlbumVisibility("library", album.id, checked);
-    toast(
-      checked ? "This album's bookmarks will show in your Library" : "Removed from your Library",
-    );
+    toast(checked ? "These shared bookmarks will show in Self" : "Removed from Self");
   }
 
   async function invite() {
@@ -109,14 +110,16 @@ function AlbumDetail() {
     return (
       <PhoneShell onAdd={() => navigate({ to: "/albums" })}>
         <div className="glass mt-16 rounded-3xl px-6 py-12 text-center">
-          <h1 className="text-lg font-semibold">{albumsReady ? "Album not found" : "Loading…"}</h1>
+          <h1 className="text-lg font-semibold">
+            {albumsReady ? "Shared bookmarks not found" : "Loading…"}
+          </h1>
           {albumsReady && (
             <Button
               variant="secondary"
               className="mt-4"
               onClick={() => navigate({ to: "/albums" })}
             >
-              Back to albums
+              Back to shared bookmarks
             </Button>
           )}
         </div>
@@ -132,13 +135,13 @@ function AlbumDetail() {
           onClick={() => navigate({ to: "/albums" })}
           className="flex min-h-11 items-center gap-2 text-sm text-muted-foreground"
         >
-          <ArrowLeft className="size-4" /> Albums
+          <ArrowLeft className="size-4" /> Shared
         </button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              aria-label="Album menu"
+              aria-label="Shared bookmarks menu"
               className="glass grid size-11 place-items-center rounded-full"
             >
               <Menu className="size-4" />
@@ -159,7 +162,7 @@ function AlbumDetail() {
               onCheckedChange={toggleLibrary}
               className="gap-2 rounded-xl py-2.5 pl-8 focus:bg-accent"
             >
-              <Bookmark className="size-4 text-primary" /> Show in Library
+              <Bookmark className="size-4 text-primary" /> Show in Self
             </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem
               checked={inCalendar}
@@ -174,7 +177,7 @@ function AlbumDetail() {
                 onClick={() => setDeleteOpen(true)}
                 className="gap-2 rounded-xl py-2.5 text-destructive focus:bg-destructive/10 focus:text-destructive"
               >
-                <Trash2 className="size-4" /> Delete album
+                <Trash2 className="size-4" /> Delete shared bookmarks
               </DropdownMenuItem>
             ) : (
               <DropdownMenuItem
@@ -187,7 +190,7 @@ function AlbumDetail() {
                 }}
                 className="gap-2 rounded-xl py-2.5 text-destructive focus:bg-destructive/10 focus:text-destructive"
               >
-                <LogOut className="size-4" /> Leave album
+                <LogOut className="size-4" /> Leave shared bookmarks
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>
@@ -233,7 +236,8 @@ function AlbumDetail() {
           <div className="glass rounded-3xl px-6 py-12 text-center">
             <h2 className="text-lg font-semibold">Nothing saved here yet</h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Tap the + button to add the first link. Everyone in this album will see it instantly.
+              Tap the + button to add the first link. Everyone in this shared bookmarks list will
+              see it instantly.
             </p>
           </div>
         ) : (
@@ -257,7 +261,7 @@ function AlbumDetail() {
             <div className="grid size-12 place-items-center rounded-full bg-destructive/15 text-destructive">
               <Trash2 className="size-5" />
             </div>
-            <AlertDialogTitle className="mt-1">Delete this album?</AlertDialogTitle>
+            <AlertDialogTitle className="mt-1">Delete these shared bookmarks?</AlertDialogTitle>
             <AlertDialogDescription>
               <span className="font-medium text-foreground">{album.name}</span> and
               {albumBookmarks.length > 0

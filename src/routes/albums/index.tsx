@@ -16,15 +16,15 @@ import { ALBUM_EMOJIS } from "@/lib/albums";
 export const Route = createFileRoute("/albums/")({
   head: () => ({
     meta: [
-      { title: "Shared albums — PoketSave" },
+      { title: "Shared bookmarks — PoketSave" },
       {
         name: "description",
-        content: "Create shared albums to save and track links together with other people.",
+        content: "Create shared bookmarks to save and track links together with other people.",
       },
-      { property: "og:title", content: "Shared albums — Pocket" },
+      { property: "og:title", content: "Shared bookmarks — Pocket" },
       {
         property: "og:description",
-        content: "Collaborate on a bookmark album with friends, classmates or teammates.",
+        content: "Collaborate on shared bookmarks with friends, classmates or teammates.",
       },
     ],
   }),
@@ -54,7 +54,7 @@ function Albums() {
           {ready && albums.length === 0 ? (
             <div className="glass mt-8 rounded-3xl px-6 py-12 text-center">
               <Users className="mx-auto size-6 text-muted-foreground" />
-              <h2 className="mt-3 text-lg font-semibold">No albums yet</h2>
+              <h2 className="mt-3 text-lg font-semibold">No shared bookmarks yet</h2>
               <p className="mt-2 text-sm text-muted-foreground">
                 Tap the + button to start one, then share the invite link — anyone who opens it
                 can join and add bookmarks right alongside you.
@@ -118,7 +118,7 @@ function SignInPrompt() {
       <Users className="mx-auto size-6 text-muted-foreground" />
       <h2 className="mt-3 text-lg font-semibold">Sign in to collaborate</h2>
       <p className="mt-2 text-sm text-muted-foreground">
-        Shared albums need an account so they can sync between everyone in the group.
+        Shared bookmarks need an account so they can sync between everyone in the group.
       </p>
       <Button
         className="neon-glow mt-5 h-12 w-full rounded-2xl text-sm font-semibold"
@@ -147,7 +147,7 @@ function CreateAlbumSheet({
 
   async function submit() {
     if (!name.trim()) {
-      toast("Give the album a name first");
+      toast("Give it a name first");
       return;
     }
     setSaving(true);
@@ -157,7 +157,7 @@ function CreateAlbumSheet({
       setEmoji(ALBUM_EMOJIS[0]!);
       onOpenChange(false);
     } catch {
-      toast("Couldn't create that album — try again.");
+      toast("Couldn't create that — try again.");
     } finally {
       setSaving(false);
     }
@@ -170,7 +170,7 @@ function CreateAlbumSheet({
         className="glass-strong mx-auto w-full max-w-[26rem] rounded-t-3xl border-border px-4 pb-8"
       >
         <SheetHeader className="px-0">
-          <SheetTitle className="font-display text-xl">New shared album</SheetTitle>
+          <SheetTitle className="font-display text-xl">New shared bookmarks</SheetTitle>
         </SheetHeader>
 
         <div className="space-y-4">
@@ -215,7 +215,7 @@ function CreateAlbumSheet({
             ) : (
               <Sparkles className="mr-1 size-4" />
             )}
-            Create album
+            Create shared bookmarks
           </Button>
         </div>
       </SheetContent>
