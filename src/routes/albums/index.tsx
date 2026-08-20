@@ -40,7 +40,7 @@ function Albums() {
     <PhoneShell onAdd={() => setOpen(true)}>
       <header className="mb-5">
         <p className="text-xs tracking-[0.22em] text-muted-foreground uppercase">Together</p>
-        <h1 className="mt-1 text-3xl font-bold text-balance-tight">Shared albums</h1>
+        <h1 className="mt-1 text-3xl font-bold text-balance-tight">Shared bookmarks</h1>
         <p className="mt-1.5 text-sm text-muted-foreground">
           Save jobs, reading or links as a group — everyone sees the same list and the same deadline
           alerts.
