@@ -100,23 +100,41 @@ export function AccountButton() {
               </Button>
             </>
           ) : (
-            <>
-              <SheetHeader className="px-0">
-                <SheetTitle className="font-display text-xl">Sync your bookmarks</SheetTitle>
+            <div className="pt-2 pb-1 text-center">
+              <div className="neon-glow mx-auto grid size-14 place-items-center rounded-2xl bg-primary/15">
+                <CloudUpload className="size-6 text-primary" />
+              </div>
+              <SheetHeader className="items-center px-0">
+                <SheetTitle className="font-display text-[22px]">Keep everything in sync</SheetTitle>
               </SheetHeader>
-              <p className="text-sm text-muted-foreground">
-                Right now your saved links only live on this device. Sign in with Google to back
-                them up and pick up right where you left off on another phone or browser.
+              <p className="mx-auto max-w-[19rem] text-sm text-muted-foreground">
+                Your saves live only on this device right now. Sign in to back them up and open them
+                anywhere.
               </p>
+              <ul className="mt-4 space-y-2 text-left">
+                {[
+                  "Bookmarks and job deadlines on every device",
+                  "Nothing lost if you clear your browser",
+                  "Shared albums with friends",
+                ].map((line) => (
+                  <li key={line} className="flex items-center gap-2.5 text-sm">
+                    <Check className="size-4 shrink-0 text-primary" />
+                    <span className="text-muted-foreground">{line}</span>
+                  </li>
+                ))}
+              </ul>
               <Button
-                className="neon-glow mt-4 h-13 w-full rounded-2xl text-base font-semibold"
+                className="neon-glow mt-5 h-13 w-full rounded-2xl text-base font-semibold"
                 onClick={signIn}
                 disabled={signingIn}
               >
                 {signingIn ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
                 Continue with Google
               </Button>
-            </>
+              <p className="mt-3 text-[11px] text-muted-foreground">
+                We only use your account to sync your saves.
+              </p>
+            </div>
           )}
         </SheetContent>
       </Sheet>
