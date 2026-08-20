@@ -133,7 +133,7 @@ function Detail() {
         <p className="mt-2 text-sm text-muted-foreground">{bookmark.description}</p>
       )}
 
-      {bookmark.category === "job" && (
+      {(bookmark.category === "job" || bookmark.category === "internship") && (
         <div className="glass mt-4 space-y-2 rounded-2xl p-4">
           {(bookmark.company || bookmark.role) && (
             <p className="text-sm">
@@ -164,6 +164,22 @@ function Detail() {
             <CheckCircle2 className="size-3.5" />
             {bookmark.applied ? "Applied" : "Mark as applied"}
           </button>
+        </div>
+      )}
+
+      {bookmark.category === "event" && (
+        <div className="glass mt-4 space-y-2 rounded-2xl p-4">
+          {bookmark.company && (
+            <p className="text-sm">
+              <span className="font-semibold">{bookmark.company}</span>
+            </p>
+          )}
+          {days !== null && (
+            <div className="flex items-center gap-2">
+              <DeadlinePill urgency={urgencyOf(days)} label={deadlineLabel(days)} />
+              <span className="text-xs text-muted-foreground">On {bookmark.deadline}</span>
+            </div>
+          )}
         </div>
       )}
 

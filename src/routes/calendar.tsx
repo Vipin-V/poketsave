@@ -5,7 +5,7 @@ import { PhoneShell } from "@/components/PhoneShell";
 import { BookmarkCard } from "@/components/BookmarkCard";
 import { AddBookmarkSheet } from "@/components/AddBookmarkSheet";
 import { useBookmarks } from "@/hooks/use-bookmarks";
-import { daysLeft, urgencyOf, type Bookmark } from "@/lib/bookmarks";
+import { REMINDER_CATEGORIES, daysLeft, urgencyOf, type Bookmark } from "@/lib/bookmarks";
 import { dedupeByUrl, loadAlbumVisibility } from "@/lib/album-visibility";
 
 export const Route = createFileRoute("/calendar")({
@@ -15,12 +15,12 @@ export const Route = createFileRoute("/calendar")({
       {
         name: "description",
         content:
-          "A month-by-month calendar of your saved job application deadlines, so you can see at a glance which ones close soon.",
+          "A month-by-month calendar of your saved job, internship and event dates, so you can see at a glance which ones are coming up.",
       },
       { property: "og:title", content: "Deadline calendar — Pocket" },
       {
         property: "og:description",
-        content: "See every saved job deadline laid out on a calendar.",
+        content: "See every saved job, internship and event date laid out on a calendar.",
       },
     ],
   }),
@@ -66,7 +66,7 @@ function CalendarView() {
   const byDate = useMemo(() => {
     const map = new Map<string, Bookmark[]>();
     for (const b of bookmarks) {
-      if (b.category !== "job" || !b.deadline) continue;
+      if (!REMINDER_CATEGORIES.includes(b.category) || !b.deadline) continue;
       map.set(b.deadline, [...(map.get(b.deadline) ?? []), b]);
     }
     return map;
@@ -86,7 +86,13 @@ function CalendarView() {
   const upcoming = useMemo(
     () =>
       bookmarks
-        .filter((b) => b.category === "job" && b.deadline && !b.applied && daysLeft(b.deadline) >= 0)
+        .filter(
+          (b) =>
+            REMINDER_CATEGORIES.includes(b.category) &&
+            b.deadline &&
+            !b.applied &&
+            daysLeft(b.deadline) >= 0,
+        )
         .sort((a, b) => daysLeft(a.deadline!) - daysLeft(b.deadline!))
         .slice(0, 3),
     [bookmarks],
@@ -178,7 +184,8 @@ function CalendarView() {
           <div className="glass rounded-3xl px-6 py-10 text-center">
             <CalendarDays className="mx-auto size-6 text-muted-foreground" />
             <p className="mt-3 text-sm text-muted-foreground">
-              No job deadlines saved yet. Add a job link with a closing date and it appears here.
+              No dates saved yet. Add a job, internship or event link with a date and it appears
+              here.
             </p>
           </div>
         ) : null}

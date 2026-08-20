@@ -27,7 +27,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { teams } from "@/integrations/appwrite/client";
 import { shareLink } from "@/lib/share";
-import { clearAlbumVisibility, loadAlbumVisibility, setAlbumVisibility } from "@/lib/album-visibility";
+import {
+  clearAlbumVisibility,
+  loadAlbumVisibility,
+  setAlbumVisibility,
+} from "@/lib/album-visibility";
 import { useAuth } from "@/hooks/use-auth";
 import { useAlbums } from "@/hooks/use-albums";
 import { useBookmarks } from "@/hooks/use-bookmarks";
@@ -69,9 +73,7 @@ function AlbumDetail() {
     setInCalendar(checked);
     setAlbumVisibility("calendar", album.id, checked);
     toast(
-      checked
-        ? "This album's job deadlines will show in your Calendar"
-        : "Removed from your Calendar",
+      checked ? "This album's deadlines will show in your Calendar" : "Removed from your Calendar",
     );
   }
 
@@ -79,7 +81,9 @@ function AlbumDetail() {
     if (!album) return;
     setInLibrary(checked);
     setAlbumVisibility("library", album.id, checked);
-    toast(checked ? "This album's bookmarks will show in your Library" : "Removed from your Library");
+    toast(
+      checked ? "This album's bookmarks will show in your Library" : "Removed from your Library",
+    );
   }
 
   async function invite() {

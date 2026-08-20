@@ -42,7 +42,7 @@ export function AccountButton({ open: openProp, onOpenChange, hideTrigger }: Pro
         const result = await enableDeadlineAlerts(user);
         if (result === "enabled") {
           setAlertsOn(true);
-          toast("Deadline alerts on — 4 days and 1 day before a job closes.");
+          toast("Deadline alerts on — 4 days and 1 day before a date arrives.");
         } else if (result === "unsupported") {
           toast("Push notifications aren't supported in this browser.");
         } else if (result === "denied") {
@@ -140,7 +140,7 @@ export function AccountButton({ open: openProp, onOpenChange, hideTrigger }: Pro
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold">Deadline alerts</p>
                   <p className="text-xs text-muted-foreground">
-                    Notify me 4 days and 1 day before a job closes
+                    Notify me 4 days and 1 day before a job, internship or event date
                   </p>
                 </div>
                 <Switch

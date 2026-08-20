@@ -55,7 +55,7 @@ function Library() {
     () =>
       bookmarks.filter(
         (b) =>
-          b.category === "job" &&
+          (b.category === "job" || b.category === "internship") &&
           b.deadline &&
           !b.applied &&
           daysLeft(b.deadline) >= 0 &&
@@ -99,7 +99,7 @@ function Library() {
         >
           <Clock className="size-4 shrink-0 text-warn" />
           <p className="text-sm text-foreground">
-            <span className="font-semibold text-warn">{expiring.length}</span> job
+            <span className="font-semibold text-warn">{expiring.length}</span> application
             {expiring.length > 1 ? "s" : ""} closing within a week
           </p>
         </Link>

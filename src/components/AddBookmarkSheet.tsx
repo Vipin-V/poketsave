@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { fetchLinkMetadata } from "@/lib/link-metadata.functions";
 import {
   CATEGORIES,
+  REMINDER_CATEGORIES,
   faviconFor,
   getDomain,
   guessCategory,
@@ -111,7 +112,8 @@ export function AddBookmarkSheet({ open, onOpenChange, initial, onSave }: Props)
       notes: form.notes.trim() || undefined,
       company: form.company.trim() || undefined,
       role: form.role.trim() || undefined,
-      deadline: form.category === "job" && form.deadline ? form.deadline : undefined,
+      deadline:
+        REMINDER_CATEGORIES.includes(form.category) && form.deadline ? form.deadline : undefined,
     });
     if (!initial) setForm(empty);
     onOpenChange(false);
@@ -177,7 +179,7 @@ export function AddBookmarkSheet({ open, onOpenChange, initial, onSave }: Props)
 
           <div className="space-y-2">
             <Label>Category</Label>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {CATEGORIES.map((c) => (
                 <button
                   key={c.value}
@@ -195,7 +197,7 @@ export function AddBookmarkSheet({ open, onOpenChange, initial, onSave }: Props)
             </div>
           </div>
 
-          {form.category === "job" && (
+          {(form.category === "job" || form.category === "internship") && (
             <div className="glass space-y-3 rounded-2xl p-3">
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-2">
@@ -230,6 +232,31 @@ export function AddBookmarkSheet({ open, onOpenChange, initial, onSave }: Props)
             </div>
           )}
 
+          {form.category === "event" && (
+            <div className="glass space-y-3 rounded-2xl p-3">
+              <div className="space-y-2">
+                <Label htmlFor="location">Location</Label>
+                <Input
+                  id="location"
+                  placeholder="Venue or online"
+                  value={form.company}
+                  onChange={(e) => set("company", e.target.value)}
+                  className="h-11"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="eventDate">Event date</Label>
+                <Input
+                  id="eventDate"
+                  type="date"
+                  value={form.deadline}
+                  onChange={(e) => set("deadline", e.target.value)}
+                  className="h-11"
+                />
+              </div>
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="tags">Tags</Label>
             <Input
@@ -252,7 +279,10 @@ export function AddBookmarkSheet({ open, onOpenChange, initial, onSave }: Props)
             />
           </div>
 
-          <Button onClick={submit} className="neon-glow h-13 w-full rounded-2xl text-base font-semibold">
+          <Button
+            onClick={submit}
+            className="neon-glow h-13 w-full rounded-2xl text-base font-semibold"
+          >
             {initial ? "Save changes" : "Save bookmark"}
           </Button>
         </div>

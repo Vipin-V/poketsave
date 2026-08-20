@@ -1,4 +1,4 @@
-export type Category = "job" | "reading" | "social" | "website";
+export type Category = "job" | "internship" | "reading" | "social" | "event" | "website";
 
 export type Bookmark = {
   id: string;
@@ -12,7 +12,7 @@ export type Bookmark = {
   tags: string[];
   notes?: string | undefined;
   createdAt: string;
-  /* job fields */
+  /* job/internship fields, reused for event (company -> location, deadline -> event date, applied -> attending) */
   company?: string | undefined;
   role?: string | undefined;
   deadline?: string | undefined; // yyyy-mm-dd
@@ -26,13 +26,19 @@ export type Bookmark = {
 
 export const CATEGORIES: { value: Category; label: string }[] = [
   { value: "job", label: "Jobs" },
+  { value: "internship", label: "Internships" },
   { value: "reading", label: "Reading" },
   { value: "social", label: "Social" },
+  { value: "event", label: "Events" },
   { value: "website", label: "Websites" },
 ];
 
 export const categoryLabel = (c: Category) =>
   CATEGORIES.find((x) => x.value === c)?.label ?? "Websites";
+
+// Categories whose deadline/date field should trigger push reminders and
+// show up on the Calendar tab.
+export const REMINDER_CATEGORIES: Category[] = ["job", "internship", "event"];
 
 const KEY = "pocket.bookmarks.v1";
 
@@ -47,8 +53,11 @@ export function getDomain(url: string): string {
 export function guessCategory(url: string): Category {
   const d = getDomain(url).toLowerCase();
   const path = url.toLowerCase();
+  if (/(internship|internshala|letsintern)/.test(d + path)) return "internship";
   if (/(jobs|careers|greenhouse|lever\.co|workday|ashbyhq|wellfound|naukri|indeed)/.test(d + path))
     return "job";
+  if (/(eventbrite|meetup\.com|lu\.ma|allevents|ticketmaster|facebook\.com\/events)/.test(d + path))
+    return "event";
   if (/(x\.com|twitter\.com|reddit\.com|instagram\.com|threads|linkedin\.com|mastodon)/.test(d))
     return "social";
   if (/(medium\.com|substack|dev\.to|blog|news|arxiv|hashnode|nytimes|theverge)/.test(d))

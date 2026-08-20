@@ -1,14 +1,17 @@
-import { daysLeft, deadlineLabel, type Bookmark } from "./bookmarks";
+import { REMINDER_CATEGORIES, daysLeft, deadlineLabel, type Bookmark } from "./bookmarks";
 
 function line(b: Bookmark): string {
   const lines = [b.title || b.domain];
-  if (b.category === "job") {
+  if (b.category === "job" || b.category === "internship") {
     if (b.company) lines.push(b.company);
     if (b.role) lines.push(b.role);
   }
+  if (b.category === "event" && b.company) lines.push(b.company);
   lines.push(b.url);
-  if (b.category === "job" && b.deadline)
-    lines.push(`${deadlineLabel(daysLeft(b.deadline))} (apply before ${b.deadline})`);
+  if (REMINDER_CATEGORIES.includes(b.category) && b.deadline) {
+    const when = b.category === "event" ? `on ${b.deadline}` : `apply before ${b.deadline}`;
+    lines.push(`${deadlineLabel(daysLeft(b.deadline))} (${when})`);
+  }
   if (b.notes) lines.push(b.notes);
   return lines.join("\n");
 }

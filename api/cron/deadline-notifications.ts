@@ -2,9 +2,10 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { Client, Databases, Query, Users, type Models } from "node-appwrite";
 import webpush from "web-push";
 
-// Runs daily via Vercel Cron (see vercel.json). Finds every personal job
-// bookmark whose deadline is exactly 4 or 1 days away and pushes a
-// notification to whoever saved it, if they've turned deadline alerts on.
+// Runs daily via Vercel Cron (see vercel.json). Finds every personal job,
+// internship or event bookmark whose deadline is exactly 4 or 1 days away
+// and pushes a notification to whoever saved it, if they've turned deadline
+// alerts on.
 //
 // Scoped to personal bookmarks only: album bookmarks don't carry a single
 // owner, and the "show this album in my Calendar" preference is stored in
@@ -75,7 +76,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   let cursor: string | undefined;
   for (;;) {
     const queries = [
-      Query.equal("category", "job"),
+      Query.equal("category", ["job", "internship", "event"]),
       Query.equal("applied", false),
       Query.isNull("albumId"),
       Query.limit(PAGE_SIZE),
@@ -116,12 +117,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const subscription = prefs?.["pushSubscription"] as webpush.PushSubscription | undefined;
     if (!subscription) continue;
 
-    const payload = JSON.stringify({
-      title: doc.title || "A saved job",
-      body:
-        left === 1
+    const body =
+      doc.category === "event"
+        ? left === 1
+          ? `Happening tomorrow — ${doc.deadline}`
+          : `Happening in ${left} days — ${doc.deadline}`
+        : left === 1
           ? `Closes tomorrow — apply before ${doc.deadline}`
-          : `Closes in ${left} days — apply before ${doc.deadline}`,
+          : `Closes in ${left} days — apply before ${doc.deadline}`;
+
+    const payload = JSON.stringify({
+      title: doc.title || "A saved link",
+      body,
       url: `/bookmark/${doc.$id}`,
     });
 

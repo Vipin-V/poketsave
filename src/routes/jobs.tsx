@@ -14,12 +14,12 @@ export const Route = createFileRoute("/jobs")({
       {
         name: "description",
         content:
-          "Every job link you saved, sorted by how soon the application window closes, with countdowns and applied tracking.",
+          "Every job and internship link you saved, sorted by how soon the application window closes, with countdowns and applied tracking.",
       },
       { property: "og:title", content: "Job deadlines — Pocket" },
       {
         property: "og:description",
-        content: "Track saved job applications and never miss a closing date.",
+        content: "Track saved job and internship applications and never miss a closing date.",
       },
     ],
   }),
@@ -34,7 +34,7 @@ function Jobs() {
   const bookmarks = useMemo(() => allBookmarks.filter((b) => !b.albumId), [allBookmarks]);
 
   const { active, rest } = useMemo(() => {
-    const jobs = bookmarks.filter((b) => b.category === "job");
+    const jobs = bookmarks.filter((b) => b.category === "job" || b.category === "internship");
     const withDate = jobs
       .filter((b) => b.deadline && !b.applied && daysLeft(b.deadline!) >= 0)
       .sort((a, b) => daysLeft(a.deadline!) - daysLeft(b.deadline!));
@@ -47,20 +47,22 @@ function Jobs() {
       <header className="mb-5 flex items-end justify-between gap-3">
         <div>
           <p className="text-xs tracking-[0.22em] text-muted-foreground uppercase">Deadlines</p>
-          <h1 className="mt-1 text-3xl font-bold text-balance-tight">Jobs closing soon</h1>
+          <h1 className="mt-1 text-3xl font-bold text-balance-tight">
+            Jobs &amp; internships closing soon
+          </h1>
         </div>
         <ShareButton
           bookmarks={active}
           label="Share"
-          heading="Job openings closing soon (shared from Pocket):"
+          heading="Jobs & internships closing soon (shared from Pocket):"
         />
       </header>
 
       {ready && active.length === 0 && rest.length === 0 ? (
         <div className="glass mt-8 rounded-3xl px-6 py-12 text-center">
-          <h2 className="text-lg font-semibold">No jobs saved</h2>
+          <h2 className="text-lg font-semibold">No jobs or internships saved</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Save a job link, set the last date to apply, and it will count down here.
+            Save a job or internship link, set the last date to apply, and it will count down here.
           </p>
         </div>
       ) : (
