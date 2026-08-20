@@ -1,12 +1,14 @@
-import { useState } from "react";
-import { User as UserIcon, LogOut, Loader2, Check, CloudUpload } from "lucide-react";
+import { useEffect, useState } from "react";
+import { User as UserIcon, LogOut, Loader2, Check, CloudUpload, BellRing } from "lucide-react";
 import { toast } from "sonner";
 import { OAuthProvider } from "appwrite";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { account, isAppwriteConfigured } from "@/integrations/appwrite/client";
 import { useAuth } from "@/hooks/use-auth";
+import { disableDeadlineAlerts, enableDeadlineAlerts } from "@/lib/push";
 
 type Props = {
   // Lets a parent (e.g. a menu item) open the account sheet itself instead
@@ -23,8 +25,42 @@ export function AccountButton({ open: openProp, onOpenChange, hideTrigger }: Pro
   const setOpen = onOpenChange ?? setOpenState;
   const [signingIn, setSigningIn] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [alertsOn, setAlertsOn] = useState(false);
+  const [togglingAlerts, setTogglingAlerts] = useState(false);
 
   const name = user?.name || user?.email || "";
+
+  useEffect(() => {
+    setAlertsOn(Boolean(user?.prefs?.["pushSubscription"]));
+  }, [user]);
+
+  async function toggleAlerts(checked: boolean) {
+    if (!user) return;
+    setTogglingAlerts(true);
+    try {
+      if (checked) {
+        const result = await enableDeadlineAlerts(user);
+        if (result === "enabled") {
+          setAlertsOn(true);
+          toast("Deadline alerts on — 4 days and 1 day before a job closes.");
+        } else if (result === "unsupported") {
+          toast("Push notifications aren't supported in this browser.");
+        } else if (result === "denied") {
+          toast("Notification permission wasn't granted.");
+        } else {
+          toast("Deadline alerts aren't set up yet.");
+        }
+      } else {
+        await disableDeadlineAlerts(user);
+        setAlertsOn(false);
+        toast("Deadline alerts off.");
+      }
+    } catch {
+      toast("Couldn't update deadline alerts — try again.");
+    } finally {
+      setTogglingAlerts(false);
+    }
+  }
 
   function signIn() {
     if (!isAppwriteConfigured) {
@@ -96,6 +132,22 @@ export function AccountButton({ open: openProp, onOpenChange, hideTrigger }: Pro
                   <p className="truncate text-sm font-semibold">{name}</p>
                   <p className="text-xs text-muted-foreground">Synced with your Google account</p>
                 </div>
+              </div>
+              <div className="glass mt-3 flex items-center gap-3 rounded-2xl p-3.5">
+                <div className="grid size-9 shrink-0 place-items-center rounded-full bg-primary/15 text-primary">
+                  <BellRing className="size-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold">Deadline alerts</p>
+                  <p className="text-xs text-muted-foreground">
+                    Notify me 4 days and 1 day before a job closes
+                  </p>
+                </div>
+                <Switch
+                  checked={alertsOn}
+                  disabled={togglingAlerts}
+                  onCheckedChange={(checked) => void toggleAlerts(checked)}
+                />
               </div>
               <Button
                 variant="secondary"
