@@ -16,7 +16,7 @@ import { ALBUM_EMOJIS } from "@/lib/albums";
 export const Route = createFileRoute("/albums/")({
   head: () => ({
     meta: [
-      { title: "Shared albums — Pocket" },
+      { title: "Shared albums — PoketSave" },
       {
         name: "description",
         content: "Create shared albums to save and track links together with other people.",

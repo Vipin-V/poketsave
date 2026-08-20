@@ -16,7 +16,7 @@ import { useAlbums } from "@/hooks/use-albums";
 
 export const Route = createFileRoute("/albums/join/$id")({
   head: () => ({
-    meta: [{ title: "Join album — Pocket" }],
+    meta: [{ title: "Join album — PoketSave" }],
   }),
   component: JoinAlbum,
 });

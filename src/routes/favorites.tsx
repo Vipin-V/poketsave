@@ -10,7 +10,7 @@ import { useBookmarks } from "@/hooks/use-bookmarks";
 export const Route = createFileRoute("/favorites")({
   head: () => ({
     meta: [
-      { title: "Favorites — Pocket" },
+      { title: "Favorites — PoketSave" },
       {
         name: "description",
         content:

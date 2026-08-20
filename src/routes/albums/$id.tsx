@@ -16,7 +16,7 @@ import { useBookmarks } from "@/hooks/use-bookmarks";
 export const Route = createFileRoute("/albums/$id")({
   head: () => ({
     meta: [
-      { title: "Shared album — Pocket" },
+      { title: "Shared album — PoketSave" },
       { name: "description", content: "Bookmarks saved to this shared album, and who's in it." },
     ],
   }),

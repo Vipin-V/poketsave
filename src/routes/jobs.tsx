@@ -10,7 +10,7 @@ import { daysLeft } from "@/lib/bookmarks";
 export const Route = createFileRoute("/jobs")({
   head: () => ({
     meta: [
-      { title: "Job deadlines — Pocket" },
+      { title: "Job deadlines — PoketSave" },
       {
         name: "description",
         content:

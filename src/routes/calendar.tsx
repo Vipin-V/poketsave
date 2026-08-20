@@ -10,7 +10,7 @@ import { daysLeft, urgencyOf, type Bookmark } from "@/lib/bookmarks";
 export const Route = createFileRoute("/calendar")({
   head: () => ({
     meta: [
-      { title: "Deadline calendar — Pocket" },
+      { title: "Deadline calendar — PoketSave" },
       {
         name: "description",
         content:
