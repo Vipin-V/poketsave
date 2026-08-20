@@ -31,6 +31,7 @@ type BookmarkDoc = Models.Document & {
   role: string | null;
   deadline: string | null;
   applied: boolean;
+  interviewDate: string | null;
   favorite: boolean;
   albumId: string | null;
 };
@@ -52,6 +53,7 @@ function docToBookmark(doc: BookmarkDoc, currentUserId: string): Bookmark {
     role: doc.role ?? undefined,
     deadline: doc.deadline ?? undefined,
     applied: doc.applied,
+    interviewDate: doc.interviewDate ?? undefined,
     favorite: doc.favorite,
     albumId: doc.albumId ?? undefined,
     // Outside an album this is always true (personal bookmarks grant the
@@ -76,6 +78,7 @@ function bookmarkToData(b: Partial<Bookmark>) {
   if ("role" in b) data["role"] = b.role ?? null;
   if ("deadline" in b) data["deadline"] = b.deadline ?? null;
   if ("applied" in b) data["applied"] = b.applied ?? false;
+  if ("interviewDate" in b) data["interviewDate"] = b.interviewDate ?? null;
   if ("favorite" in b) data["favorite"] = b.favorite ?? false;
   if ("albumId" in b) data["albumId"] = b.albumId ?? null;
   return data;

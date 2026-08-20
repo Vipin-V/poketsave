@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 import {
   ArrowLeft,
+  CalendarClock,
   CheckCircle2,
   ExternalLink,
   FolderPlus,
@@ -9,6 +10,7 @@ import {
   Share2,
   Star,
   Trash2,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PhoneShell } from "@/components/PhoneShell";
@@ -26,6 +28,7 @@ import {
   daysLeft,
   deadlineLabel,
   faviconFor,
+  interviewLabel,
   urgencyOf,
 } from "@/lib/bookmarks";
 
@@ -49,6 +52,7 @@ function Detail() {
   const { albums } = useAlbums();
   const [editing, setEditing] = useState(false);
   const [albumPickerOpen, setAlbumPickerOpen] = useState(false);
+  const [interviewInputOpen, setInterviewInputOpen] = useState(false);
   const bookmark = bookmarks.find((b) => b.id === id);
 
   function addToAlbum(album: Album) {
@@ -84,6 +88,8 @@ function Detail() {
   }
 
   const days = bookmark.deadline ? daysLeft(bookmark.deadline) : null;
+  const interviewDays =
+    bookmark.applied && bookmark.interviewDate ? daysLeft(bookmark.interviewDate) : null;
 
   return (
     <PhoneShell onAdd={() => setEditing(true)}>
@@ -144,11 +150,25 @@ function Detail() {
           {days !== null && (
             <div className="flex items-center gap-2">
               <DeadlinePill
-                urgency={bookmark.applied ? "ok" : urgencyOf(days)}
-                label={bookmark.applied ? "Applied" : deadlineLabel(days)}
+                urgency={
+                  bookmark.applied
+                    ? interviewDays !== null
+                      ? urgencyOf(interviewDays)
+                      : "ok"
+                    : urgencyOf(days)
+                }
+                label={
+                  bookmark.applied
+                    ? interviewDays !== null
+                      ? interviewLabel(interviewDays)
+                      : "Applied"
+                    : deadlineLabel(days)
+                }
               />
               <span className="text-xs text-muted-foreground">
-                Apply before {bookmark.deadline}
+                {bookmark.applied && bookmark.interviewDate
+                  ? `Interview on ${bookmark.interviewDate}`
+                  : `Apply before ${bookmark.deadline}`}
               </span>
             </div>
           )}
@@ -164,6 +184,53 @@ function Detail() {
             <CheckCircle2 className="size-3.5" />
             {bookmark.applied ? "Applied" : "Mark as applied"}
           </button>
+
+          {bookmark.applied && (
+            <div className="pt-0.5">
+              {interviewInputOpen ? (
+                <input
+                  type="date"
+                  autoFocus
+                  defaultValue={bookmark.interviewDate ?? ""}
+                  onChange={(e) => {
+                    update(bookmark.id, { interviewDate: e.target.value || undefined });
+                    setInterviewInputOpen(false);
+                  }}
+                  onBlur={() => setInterviewInputOpen(false)}
+                  className="h-9 rounded-xl border border-border bg-transparent px-2.5 text-xs text-foreground"
+                />
+              ) : bookmark.interviewDate ? (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <CalendarClock className="size-3.5 shrink-0" />
+                  <span className="flex-1">Interview / exam on {bookmark.interviewDate}</span>
+                  <button
+                    type="button"
+                    aria-label="Edit interview date"
+                    onClick={() => setInterviewInputOpen(true)}
+                    className="grid size-7 place-items-center rounded-full text-muted-foreground"
+                  >
+                    <Pencil className="size-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Remove interview date"
+                    onClick={() => update(bookmark.id, { interviewDate: undefined })}
+                    className="grid size-7 place-items-center rounded-full text-muted-foreground"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setInterviewInputOpen(true)}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-full border border-dashed border-border px-3 text-xs text-muted-foreground"
+                >
+                  <CalendarClock className="size-3.5" /> Add interview/exam date
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
 

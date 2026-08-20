@@ -7,7 +7,9 @@ import webpush from "web-push";
 // away and pushes a notification to whoever saved it, if they've turned
 // deadline alerts on — but only during the one hour of the day (UTC) they
 // chose, so each user gets notified once per matching bookmark per day
-// rather than on every hourly run.
+// rather than on every hourly run. Once a job/internship is marked applied,
+// an interview/exam date can be added, which gets the same 4/1/0-day
+// reminders as the original deadline did.
 //
 // Scoped to personal bookmarks only: album bookmarks don't carry a single
 // owner, and the "show this album in my Calendar" preference is stored in
@@ -22,6 +24,7 @@ type BookmarkDoc = Models.Document & {
   title: string;
   deadline: string | null;
   applied: boolean;
+  interviewDate: string | null;
   albumId: string | null;
 };
 
@@ -76,12 +79,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const databases = new Databases(client);
   const users = new Users(client);
 
-  const dueBookmarks: { doc: BookmarkDoc; ownerId: string; daysLeft: 4 | 1 | 0 }[] = [];
+  type Kind = "deadline" | "interview";
+  const dueBookmarks: { doc: BookmarkDoc; ownerId: string; daysLeft: 4 | 1 | 0; kind: Kind }[] = [];
   let cursor: string | undefined;
   for (;;) {
     const queries = [
       Query.equal("category", ["job", "internship", "event"]),
-      Query.equal("applied", false),
       Query.isNull("albumId"),
       Query.limit(PAGE_SIZE),
     ];
@@ -93,12 +96,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     );
 
     for (const doc of page.documents) {
-      if (!doc.deadline) continue;
-      const left = daysLeft(doc.deadline);
-      if (left !== 4 && left !== 1 && left !== 0) continue;
       const ownerId = ownerIdFromPermissions(doc.$permissions);
       if (!ownerId) continue;
-      dueBookmarks.push({ doc, ownerId, daysLeft: left });
+
+      if (!doc.applied && doc.deadline) {
+        const left = daysLeft(doc.deadline);
+        if (left === 4 || left === 1 || left === 0) {
+          dueBookmarks.push({ doc, ownerId, daysLeft: left, kind: "deadline" });
+        }
+      }
+
+      if (doc.applied && doc.interviewDate && doc.category !== "event") {
+        const left = daysLeft(doc.interviewDate);
+        if (left === 4 || left === 1 || left === 0) {
+          dueBookmarks.push({ doc, ownerId, daysLeft: left, kind: "interview" });
+        }
+      }
     }
 
     const last = page.documents.at(-1);
@@ -109,7 +122,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   let notified = 0;
   const prefsCache = new Map<string, Models.DefaultPreferences | null>();
 
-  for (const { doc, ownerId, daysLeft: left } of dueBookmarks) {
+  for (const { doc, ownerId, daysLeft: left, kind } of dueBookmarks) {
     if (!prefsCache.has(ownerId)) {
       try {
         prefsCache.set(ownerId, await users.getPrefs<Models.DefaultPreferences>(ownerId));
@@ -125,17 +138,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (new Date().getUTCHours() !== notifyHour) continue;
 
     const body =
-      doc.category === "event"
+      kind === "interview"
         ? left === 0
-          ? `Happening today — ${doc.deadline}`
+          ? `Interview/exam today — ${doc.interviewDate}`
           : left === 1
-            ? `Happening tomorrow — ${doc.deadline}`
-            : `Happening in ${left} days — ${doc.deadline}`
-        : left === 0
-          ? `Last day to apply — ${doc.deadline}`
-          : left === 1
-            ? `Closes tomorrow — apply before ${doc.deadline}`
-            : `Closes in ${left} days — apply before ${doc.deadline}`;
+            ? `Interview/exam tomorrow — ${doc.interviewDate}`
+            : `Interview/exam in ${left} days — ${doc.interviewDate}`
+        : doc.category === "event"
+          ? left === 0
+            ? `Happening today — ${doc.deadline}`
+            : left === 1
+              ? `Happening tomorrow — ${doc.deadline}`
+              : `Happening in ${left} days — ${doc.deadline}`
+          : left === 0
+            ? `Last day to apply — ${doc.deadline}`
+            : left === 1
+              ? `Closes tomorrow — apply before ${doc.deadline}`
+              : `Closes in ${left} days — apply before ${doc.deadline}`;
 
     const payload = JSON.stringify({
       title: doc.title || "A saved link",

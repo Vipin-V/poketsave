@@ -19,7 +19,7 @@ Built with TanStack Start, React 19, Tailwind CSS v4, and Appwrite (database + a
    |---|---|---|
    | `url`, `title`, `domain`, `category` | String | Yes |
    | `description`, `image`, `favicon`, `notes`, `company`, `role` | String | No |
-   | `deadline` | String (`yyyy-mm-dd`) | No |
+   | `deadline`, `interviewDate` | String (`yyyy-mm-dd`) | No |
    | `tags` | String, array | No |
    | `applied`, `favorite` | Boolean | Yes (default `false`) |
 

@@ -7,6 +7,7 @@ import {
   daysLeft,
   deadlineLabel,
   faviconFor,
+  interviewLabel,
   urgencyOf,
   type Bookmark,
 } from "@/lib/bookmarks";
@@ -27,6 +28,8 @@ const DELETE_AT = 120;
 
 export function BookmarkCard({ bookmark }: { bookmark: Bookmark }) {
   const days = bookmark.deadline ? daysLeft(bookmark.deadline) : null;
+  const interviewDays =
+    bookmark.applied && bookmark.interviewDate ? daysLeft(bookmark.interviewDate) : null;
   const { update, remove } = useBookmarks();
   const [dx, setDx] = useState(0);
   const [swiping, setSwiping] = useState(false);
@@ -160,8 +163,20 @@ export function BookmarkCard({ bookmark }: { bookmark: Bookmark }) {
                 ))}
                 {days !== null && (
                   <DeadlinePill
-                    urgency={bookmark.applied ? "ok" : urgencyOf(days)}
-                    label={bookmark.applied ? "Applied" : deadlineLabel(days)}
+                    urgency={
+                      bookmark.applied
+                        ? interviewDays !== null
+                          ? urgencyOf(interviewDays)
+                          : "ok"
+                        : urgencyOf(days)
+                    }
+                    label={
+                      bookmark.applied
+                        ? interviewDays !== null
+                          ? interviewLabel(interviewDays)
+                          : "Applied"
+                        : deadlineLabel(days)
+                    }
                   />
                 )}
               </div>

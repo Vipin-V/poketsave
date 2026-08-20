@@ -17,6 +17,8 @@ export type Bookmark = {
   role?: string | undefined;
   deadline?: string | undefined; // yyyy-mm-dd
   applied?: boolean | undefined;
+  /* set once applied, if an exam or interview gets scheduled */
+  interviewDate?: string | undefined; // yyyy-mm-dd
   favorite?: boolean | undefined;
   /* set when this bookmark lives in a shared album instead of a personal list */
   albumId?: string | undefined;
@@ -109,6 +111,13 @@ export function deadlineLabel(days: number): string {
   if (days === 0) return "Last day";
   if (days === 1) return "1 day left";
   return `${days} days left`;
+}
+
+export function interviewLabel(days: number): string {
+  if (days < 0) return "Interview passed";
+  if (days === 0) return "Interview today";
+  if (days === 1) return "Interview tomorrow";
+  return `Interview in ${days} days`;
 }
 
 export function faviconFor(domain: string) {
