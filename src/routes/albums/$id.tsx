@@ -1,12 +1,29 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, LogOut, Trash2, UserPlus } from "lucide-react";
+import { ArrowLeft, LogOut, Menu, Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import type { Models } from "appwrite";
 import { PhoneShell } from "@/components/PhoneShell";
 import { BookmarkCard } from "@/components/BookmarkCard";
 import { AddBookmarkSheet } from "@/components/AddBookmarkSheet";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { teams } from "@/integrations/appwrite/client";
 import { shareLink } from "@/lib/share";
 import { useAuth } from "@/hooks/use-auth";
@@ -30,11 +47,23 @@ function AlbumDetail() {
   const { albums, ready: albumsReady, remove, leave } = useAlbums();
   const { bookmarks, add } = useBookmarks();
   const [addOpen, setAddOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [members, setMembers] = useState<Models.Membership[]>([]);
 
   const album = albums.find((a) => a.id === id);
   const isOwner = album?.ownerId === user?.$id;
   const albumBookmarks = useMemo(() => bookmarks.filter((b) => b.albumId === id), [bookmarks, id]);
+
+  async function invite() {
+    if (!album) return;
+    const url = `${window.location.origin}/albums/join/${album.id}`;
+    const result = await shareLink(url, {
+      title: album.name,
+      text: `Join "${album.name}" on Pocket`,
+    });
+    if (result === "copied") toast("Invite link copied — send it to anyone you want in.");
+    if (result === "failed") toast("Couldn't create an invite link right now.");
+  }
 
   useEffect(() => {
     if (!album) return;
@@ -64,7 +93,7 @@ function AlbumDetail() {
   }
 
   return (
-    <PhoneShell onAdd={() => setAddOpen(true)}>
+    <PhoneShell onAdd={() => setAddOpen(true)} hideMenu>
       <div className="mb-4 flex items-center justify-between">
         <button
           type="button"
@@ -73,22 +102,46 @@ function AlbumDetail() {
         >
           <ArrowLeft className="size-4" /> Albums
         </button>
-        <button
-          type="button"
-          onClick={async () => {
-            const url = `${window.location.origin}/albums/join/${album.id}`;
-            const result = await shareLink(url, {
-              title: album.name,
-              text: `Join "${album.name}" on Pocket`,
-            });
-            if (result === "copied") toast("Invite link copied — send it to anyone you want in.");
-            if (result === "failed") toast("Couldn't create an invite link right now.");
-          }}
-          aria-label="Copy invite link"
-          className="glass grid size-11 place-items-center rounded-full"
-        >
-          <UserPlus className="size-4 text-primary" />
-        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              aria-label="Album menu"
+              className="glass grid size-11 place-items-center rounded-full"
+            >
+              <Menu className="size-4" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            className="w-56 rounded-2xl border-border bg-popover p-1.5 text-popover-foreground"
+          >
+            <DropdownMenuItem
+              onClick={() => void invite()}
+              className="gap-2 rounded-xl py-2.5 focus:bg-accent"
+            >
+              <UserPlus className="size-4 text-primary" /> Invite people
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            {isOwner ? (
+              <DropdownMenuItem
+                onClick={() => setDeleteOpen(true)}
+                className="gap-2 rounded-xl py-2.5 text-destructive focus:bg-destructive/10 focus:text-destructive"
+              >
+                <Trash2 className="size-4" /> Delete album
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem
+                onClick={() => {
+                  void leave(album).then(() => navigate({ to: "/albums" }));
+                }}
+                className="gap-2 rounded-xl py-2.5 text-destructive focus:bg-destructive/10 focus:text-destructive"
+              >
+                <LogOut className="size-4" /> Leave album
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <div className="flex items-center gap-3">
@@ -142,35 +195,42 @@ function AlbumDetail() {
         )}
       </div>
 
-      <div className="mt-6">
-        {isOwner ? (
-          <Button
-            variant="ghost"
-            className="h-12 w-full rounded-2xl text-destructive"
-            onClick={() => {
-              void remove(album).then(() => navigate({ to: "/albums" }));
-            }}
-          >
-            <Trash2 className="mr-1 size-4" /> Delete album
-          </Button>
-        ) : (
-          <Button
-            variant="ghost"
-            className="h-12 w-full rounded-2xl text-destructive"
-            onClick={() => {
-              void leave(album).then(() => navigate({ to: "/albums" }));
-            }}
-          >
-            <LogOut className="mr-1 size-4" /> Leave album
-          </Button>
-        )}
-      </div>
-
       <AddBookmarkSheet
         open={addOpen}
         onOpenChange={setAddOpen}
-        onSave={(b) => add({ ...b, albumId: album.id }, album.teamId)}
+        onSave={(b) => add({ ...b, albumId: album.id }, album.teamId, album.ownerId)}
       />
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent className="w-[calc(100%-2rem)] max-w-[22rem] rounded-3xl border-border bg-popover p-6 text-popover-foreground">
+          <AlertDialogHeader className="items-center text-center">
+            <div className="grid size-12 place-items-center rounded-full bg-destructive/15 text-destructive">
+              <Trash2 className="size-5" />
+            </div>
+            <AlertDialogTitle className="mt-1">Delete this album?</AlertDialogTitle>
+            <AlertDialogDescription>
+              <span className="font-medium text-foreground">{album.name}</span> and
+              {albumBookmarks.length > 0
+                ? ` its ${albumBookmarks.length} bookmark${albumBookmarks.length > 1 ? "s" : ""}`
+                : " it"}{" "}
+              will be removed permanently for every member. This can&apos;t be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-2 flex-row gap-2 sm:justify-stretch">
+            <AlertDialogCancel className="mt-0 h-12 flex-1 rounded-2xl border-border">
+              Keep it
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                void remove(album).then(() => navigate({ to: "/albums" }));
+              }}
+              className="h-12 flex-1 rounded-2xl bg-destructive text-destructive-foreground shadow-none hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PhoneShell>
   );
 }

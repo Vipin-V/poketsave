@@ -20,6 +20,8 @@ export type Bookmark = {
   favorite?: boolean | undefined;
   /* set when this bookmark lives in a shared album instead of a personal list */
   albumId?: string | undefined;
+  /* false only for album bookmarks the current user didn't add and doesn't own the album for */
+  canDelete?: boolean | undefined;
 };
 
 export const CATEGORIES: { value: Category; label: string }[] = [

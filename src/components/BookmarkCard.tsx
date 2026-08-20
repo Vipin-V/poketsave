@@ -37,6 +37,7 @@ export function BookmarkCard({ bookmark }: { bookmark: Bookmark }) {
 
   function onPointerDown(e: React.PointerEvent) {
     if (e.pointerType === "mouse") return;
+    if (bookmark.canDelete === false) return;
     start.current = { x: e.clientX, y: e.clientY };
     locked.current = false;
   }

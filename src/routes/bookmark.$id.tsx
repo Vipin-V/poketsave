@@ -173,16 +173,18 @@ function Detail() {
         <IconAction label="Edit" onClick={() => setEditing(true)}>
           <Pencil className="size-4" />
         </IconAction>
-        <IconAction
-          label="Delete"
-          destructive
-          onClick={() => {
-            remove(bookmark.id);
-            navigate({ to: "/" });
-          }}
-        >
-          <Trash2 className="size-4" />
-        </IconAction>
+        {bookmark.canDelete !== false && (
+          <IconAction
+            label="Delete"
+            destructive
+            onClick={() => {
+              remove(bookmark.id);
+              navigate({ to: "/" });
+            }}
+          >
+            <Trash2 className="size-4" />
+          </IconAction>
+        )}
       </div>
 
       {editing && (

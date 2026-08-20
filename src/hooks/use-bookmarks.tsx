@@ -35,7 +35,7 @@ type BookmarkDoc = Models.Document & {
   albumId: string | null;
 };
 
-function docToBookmark(doc: BookmarkDoc): Bookmark {
+function docToBookmark(doc: BookmarkDoc, currentUserId: string): Bookmark {
   return {
     id: doc.$id,
     url: doc.url,
@@ -54,6 +54,10 @@ function docToBookmark(doc: BookmarkDoc): Bookmark {
     applied: doc.applied,
     favorite: doc.favorite,
     albumId: doc.albumId ?? undefined,
+    // Outside an album this is always true (personal bookmarks grant the
+    // owner delete on every doc). Inside an album, only the uploader and the
+    // album owner get delete permission on a given bookmark document.
+    canDelete: doc.$permissions.includes(Permission.delete(Role.user(currentUserId))),
   };
 }
 
@@ -104,7 +108,7 @@ async function listAllBookmarkDocs(): Promise<BookmarkDoc[]> {
 type BookmarksApi = {
   bookmarks: Bookmark[];
   ready: boolean;
-  add: (b: Bookmark, teamId?: string) => void;
+  add: (b: Bookmark, teamId?: string, ownerId?: string) => void;
   update: (id: string, patch: Partial<Bookmark>) => void;
   remove: (id: string) => void;
 };
@@ -146,7 +150,7 @@ export function BookmarksProvider({ children }: { children: ReactNode }) {
       try {
         const local = loadBookmarks();
         const documents = await listAllBookmarkDocs();
-        const cloud = documents.map(docToBookmark);
+        const cloud = documents.map((doc) => docToBookmark(doc, user.$id));
         const cloudIds = new Set(cloud.map((b) => b.id));
         const cloudUrls = new Set(cloud.map((b) => b.url));
         const toUpload = local.filter((b) => !cloudIds.has(b.id) && !cloudUrls.has(b.url));
@@ -167,8 +171,8 @@ export function BookmarksProvider({ children }: { children: ReactNode }) {
           ),
         );
 
-        const merged = [...uploaded.map(docToBookmark), ...cloud].sort((a, b) =>
-          a.createdAt < b.createdAt ? 1 : -1,
+        const merged = [...uploaded.map((doc) => docToBookmark(doc, user.$id)), ...cloud].sort(
+          (a, b) => (a.createdAt < b.createdAt ? 1 : -1),
         );
         if (cancelled) return;
         setBookmarks(merged);
@@ -209,7 +213,7 @@ export function BookmarksProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const bookmark = docToBookmark(doc);
+      const bookmark = docToBookmark(doc, user.$id);
       setBookmarks((prev) => {
         const next = prev.some((b) => b.id === bookmark.id)
           ? prev.map((b) => (b.id === bookmark.id ? bookmark : b))
@@ -225,8 +229,10 @@ export function BookmarksProvider({ children }: { children: ReactNode }) {
 
   const add = useCallback(
     // Pass teamId when saving into a shared album — grants every current and
-    // future member of that album's team access instead of just this user.
-    (b: Bookmark, teamId?: string) => {
+    // future member of that album's team read/update access instead of just
+    // this user. Delete stays narrower: only the person who added the
+    // bookmark and the album owner can remove it, everyone else can't.
+    (b: Bookmark, teamId?: string, ownerId?: string) => {
       if (user) {
         setBookmarks((prev) => {
           const next = [b, ...prev];
@@ -237,7 +243,8 @@ export function BookmarksProvider({ children }: { children: ReactNode }) {
           ? [
               Permission.read(Role.team(teamId)),
               Permission.update(Role.team(teamId)),
-              Permission.delete(Role.team(teamId)),
+              Permission.delete(Role.user(user.$id)),
+              ...(ownerId && ownerId !== user.$id ? [Permission.delete(Role.user(ownerId))] : []),
             ]
           : [
               Permission.read(Role.user(user.$id)),

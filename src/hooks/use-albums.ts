@@ -135,13 +135,23 @@ export function useAlbums() {
   );
 
   const remove = useCallback(async (album: Album) => {
-    const bookmarks = await databases.listDocuments(DATABASE_ID, BOOKMARKS_COLLECTION_ID, [
-      Query.equal("albumId", album.id),
-    ]);
+    // Appwrite caps a single list call at 100 documents, so an album with
+    // more bookmarks than that needs multiple pages or the tail end is left
+    // behind as an orphaned trace instead of actually being deleted.
+    const PAGE_SIZE = 100;
+    const ids: string[] = [];
+    let cursor: string | undefined;
+    for (;;) {
+      const queries = [Query.equal("albumId", album.id), Query.limit(PAGE_SIZE)];
+      if (cursor) queries.push(Query.cursorAfter(cursor));
+      const page = await databases.listDocuments(DATABASE_ID, BOOKMARKS_COLLECTION_ID, queries);
+      ids.push(...page.documents.map((doc) => doc.$id));
+      const last = page.documents.at(-1);
+      if (page.documents.length < PAGE_SIZE || !last) break;
+      cursor = last.$id;
+    }
     await Promise.all(
-      bookmarks.documents.map((doc) =>
-        databases.deleteDocument(DATABASE_ID, BOOKMARKS_COLLECTION_ID, doc.$id),
-      ),
+      ids.map((id) => databases.deleteDocument(DATABASE_ID, BOOKMARKS_COLLECTION_ID, id)),
     );
     await databases.deleteDocument(DATABASE_ID, ALBUMS_COLLECTION_ID, album.id);
     await teams.delete({ teamId: album.teamId }).catch(() => {});
