@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 import { toast } from "sonner";
 import { ID, Permission, Query, Role, type Models } from "appwrite";
 import { loadBookmarks, saveBookmarks, type Bookmark, type Category } from "@/lib/bookmarks";
@@ -70,7 +77,44 @@ function bookmarkToData(b: Partial<Bookmark>) {
   return data;
 }
 
-export function useBookmarks() {
+// Appwrite caps a single list call at 100 documents, so a library bigger
+// than that needs multiple pages to come back in full instead of being
+// silently truncated at the (default 25 / max 100) page size.
+const PAGE_SIZE = 100;
+
+async function listAllBookmarkDocs(): Promise<BookmarkDoc[]> {
+  const all: BookmarkDoc[] = [];
+  let cursor: string | undefined;
+  for (;;) {
+    const queries = [Query.orderDesc("$createdAt"), Query.limit(PAGE_SIZE)];
+    if (cursor) queries.push(Query.cursorAfter(cursor));
+    const page = await databases.listDocuments<BookmarkDoc>(
+      DATABASE_ID,
+      BOOKMARKS_COLLECTION_ID,
+      queries,
+    );
+    all.push(...page.documents);
+    const last = page.documents.at(-1);
+    if (page.documents.length < PAGE_SIZE || !last) break;
+    cursor = last.$id;
+  }
+  return all;
+}
+
+type BookmarksApi = {
+  bookmarks: Bookmark[];
+  ready: boolean;
+  add: (b: Bookmark, teamId?: string) => void;
+  update: (id: string, patch: Partial<Bookmark>) => void;
+  remove: (id: string) => void;
+};
+
+const BookmarksContext = createContext<BookmarksApi | null>(null);
+
+// Fetches and subscribes exactly once for the whole app. Everything that
+// needs bookmarks (pages, and every individual BookmarkCard) reads from this
+// single shared instance instead of each running its own fetch/subscription.
+export function BookmarksProvider({ children }: { children: ReactNode }) {
   const { user, ready: authReady } = useAuth();
   // Start empty so server and client render the same first paint; localStorage
   // is read in the effect below right after hydration.
@@ -101,12 +145,8 @@ export function useBookmarks() {
     (async () => {
       try {
         const local = loadBookmarks();
-        const existing = await databases.listDocuments<BookmarkDoc>(
-          DATABASE_ID,
-          BOOKMARKS_COLLECTION_ID,
-          [Query.orderDesc("$createdAt")],
-        );
-        const cloud = existing.documents.map(docToBookmark);
+        const documents = await listAllBookmarkDocs();
+        const cloud = documents.map(docToBookmark);
         const cloudIds = new Set(cloud.map((b) => b.id));
         const cloudUrls = new Set(cloud.map((b) => b.url));
         const toUpload = local.filter((b) => !cloudIds.has(b.id) && !cloudUrls.has(b.url));
@@ -261,5 +301,15 @@ export function useBookmarks() {
     [user],
   );
 
-  return { bookmarks, ready, add, update, remove };
+  return (
+    <BookmarksContext.Provider value={{ bookmarks, ready, add, update, remove }}>
+      {children}
+    </BookmarksContext.Provider>
+  );
+}
+
+export function useBookmarks(): BookmarksApi {
+  const ctx = useContext(BookmarksContext);
+  if (!ctx) throw new Error("useBookmarks must be used within a BookmarksProvider");
+  return ctx;
 }
