@@ -6,21 +6,22 @@ import { AccountButton } from "./AccountButton";
 const TABS = [
   { to: "/", icon: Bookmark, label: "Library", match: (p: string) => p === "/" },
   { to: "/albums", icon: Users, label: "Albums", match: (p: string) => p.startsWith("/albums") },
+  { to: "/favorites", icon: Star, label: "Saved", match: (p: string) => p.startsWith("/favorites") },
+  { to: "/jobs", icon: Briefcase, label: "Jobs", match: (p: string) => p.startsWith("/jobs") },
   {
     to: "/calendar",
     icon: CalendarDays,
     label: "Calendar",
     match: (p: string) => p.startsWith("/calendar"),
   },
-  { to: "/jobs", icon: Briefcase, label: "Jobs", match: (p: string) => p.startsWith("/jobs") },
-  { to: "/favorites", icon: Star, label: "Saved", match: (p: string) => p.startsWith("/favorites") },
 ] as const;
 
 export function PhoneShell({ children, onAdd }: { children: ReactNode; onAdd: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const left = TABS.slice(0, 2);
   const right = TABS.slice(3);
-  const calendar = TABS[2];
+  const saved = TABS[2];
+  const SavedIcon = saved.icon;
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-[26rem] flex-col">
@@ -30,13 +31,13 @@ export function PhoneShell({ children, onAdd }: { children: ReactNode; onAdd: ()
       >
         <div className="mb-3 flex items-center justify-between">
           <Link
-            to="/calendar"
-            aria-label="Calendar"
+            to="/favorites"
+            aria-label="Saved"
             className={`glass grid size-11 place-items-center rounded-full ${
-              calendar.match(pathname) ? "text-primary" : "text-muted-foreground"
+              saved.match(pathname) ? "text-primary" : "text-muted-foreground"
             }`}
           >
-            <CalendarDays className="size-4" />
+            <SavedIcon className="size-4" />
           </Link>
           <AccountButton />
         </div>
