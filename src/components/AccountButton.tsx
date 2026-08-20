@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { User as UserIcon, LogOut, Loader2 } from "lucide-react";
+import { User as UserIcon, LogOut, Loader2, Check, CloudUpload } from "lucide-react";
 import { toast } from "sonner";
 import { OAuthProvider } from "appwrite";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
