@@ -72,7 +72,9 @@ function bookmarkToData(b: Partial<Bookmark>) {
 
 export function useBookmarks() {
   const { user, ready: authReady } = useAuth();
-  const [bookmarks, setBookmarks] = useState<Bookmark[]>(() => loadBookmarks());
+  // Start empty so server and client render the same first paint; localStorage
+  // is read in the effect below right after hydration.
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [ready, setReady] = useState(false);
 
   // Guest mode: identical to the pre-auth behaviour, pure localStorage.

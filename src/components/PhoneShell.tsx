@@ -3,16 +3,41 @@ import { Bookmark, Briefcase, CalendarDays, Plus, Star, Users } from "lucide-rea
 import type { ReactNode } from "react";
 import { AccountButton } from "./AccountButton";
 
+const TABS = [
+  { to: "/", icon: Bookmark, label: "Library", match: (p: string) => p === "/" },
+  { to: "/albums", icon: Users, label: "Albums", match: (p: string) => p.startsWith("/albums") },
+  {
+    to: "/calendar",
+    icon: CalendarDays,
+    label: "Calendar",
+    match: (p: string) => p.startsWith("/calendar"),
+  },
+  { to: "/jobs", icon: Briefcase, label: "Jobs", match: (p: string) => p.startsWith("/jobs") },
+  { to: "/favorites", icon: Star, label: "Saved", match: (p: string) => p.startsWith("/favorites") },
+] as const;
+
 export function PhoneShell({ children, onAdd }: { children: ReactNode; onAdd: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const left = TABS.slice(0, 2);
+  const right = TABS.slice(3);
+  const calendar = TABS[2];
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-[26rem] flex-col">
       <main
-        className="flex-1 px-4 pb-36"
-        style={{ paddingTop: "max(1.25rem, env(safe-area-inset-top))" }}
+        className="flex-1 px-4 pb-40"
+        style={{ paddingTop: "max(1rem, env(safe-area-inset-top))" }}
       >
-        <div className="mb-3 flex justify-end">
+        <div className="mb-3 flex items-center justify-between">
+          <Link
+            to="/calendar"
+            aria-label="Calendar"
+            className={`glass grid size-11 place-items-center rounded-full ${
+              calendar.match(pathname) ? "text-primary" : "text-muted-foreground"
+            }`}
+          >
+            <CalendarDays className="size-4" />
+          </Link>
           <AccountButton />
         </div>
         {children}
@@ -22,48 +47,26 @@ export function PhoneShell({ children, onAdd }: { children: ReactNode; onAdd: ()
         className="fixed inset-x-0 bottom-0 z-40 mx-auto w-full max-w-[26rem] px-4"
         style={{ paddingBottom: "max(0.85rem, env(safe-area-inset-bottom))" }}
       >
-        <div className="glass-strong flex items-center rounded-3xl px-2 py-2 shadow-2xl">
-          <div className="flex flex-1 items-center">
-            <TabLink
-              to="/"
-              active={pathname === "/"}
-              icon={<Bookmark className="size-5" />}
-              label="Library"
-            />
-            <TabLink
-              to="/albums"
-              active={pathname.startsWith("/albums")}
-              icon={<Users className="size-5" />}
-              label="Albums"
-            />
-            <TabLink
-              to="/calendar"
-              active={pathname.startsWith("/calendar")}
-              icon={<CalendarDays className="size-5" />}
-              label="Calendar"
-            />
+        <div className="glass-strong relative flex items-center gap-1 rounded-[1.75rem] p-1.5 shadow-[0_18px_50px_-18px_rgba(0,0,0,0.9)]">
+          <div className="flex flex-1 items-center gap-1">
+            {left.map((t) => (
+              <TabLink key={t.to} {...t} active={t.match(pathname)} />
+            ))}
           </div>
+
           <button
             type="button"
             onClick={onAdd}
             aria-label="Add bookmark"
-            className="neon-glow -mt-6 grid size-14 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground transition-transform active:scale-95"
+            className="neon-glow -mt-7 grid size-14 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground transition-transform active:scale-90"
           >
             <Plus className="size-6" strokeWidth={2.6} />
           </button>
-          <div className="flex flex-1 items-center">
-            <TabLink
-              to="/jobs"
-              active={pathname.startsWith("/jobs")}
-              icon={<Briefcase className="size-5" />}
-              label="Jobs"
-            />
-            <TabLink
-              to="/favorites"
-              active={pathname.startsWith("/favorites")}
-              icon={<Star className="size-5" />}
-              label="Saved"
-            />
+
+          <div className="flex flex-1 items-center gap-1">
+            {right.map((t) => (
+              <TabLink key={t.to} {...t} active={t.match(pathname)} />
+            ))}
           </div>
         </div>
       </nav>
@@ -74,23 +77,27 @@ export function PhoneShell({ children, onAdd }: { children: ReactNode; onAdd: ()
 function TabLink({
   to,
   active,
-  icon,
+  icon: Icon,
   label,
 }: {
   to: string;
   active: boolean;
-  icon: ReactNode;
+  icon: typeof Bookmark;
   label: string;
 }) {
   return (
     <Link
       to={to}
-      className={`flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-2xl px-2 py-1.5 text-[11px] font-medium transition-colors ${
-        active ? "text-primary" : "text-muted-foreground"
+      aria-label={label}
+      aria-current={active ? "page" : undefined}
+      className={`relative flex min-h-12 flex-1 flex-col items-center justify-center gap-0.5 rounded-[1.25rem] px-1 transition-colors ${
+        active ? "bg-primary/12 text-primary" : "text-muted-foreground"
       }`}
     >
-      {icon}
-      {label}
+      <Icon className="size-5" strokeWidth={active ? 2.4 : 1.9} />
+      <span className={`text-[10px] leading-none font-medium ${active ? "" : "opacity-70"}`}>
+        {label}
+      </span>
     </Link>
   );
 }
