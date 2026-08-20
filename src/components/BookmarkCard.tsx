@@ -12,6 +12,16 @@ import {
 } from "@/lib/bookmarks";
 import { useBookmarks } from "@/hooks/use-bookmarks";
 import { DeadlinePill } from "./DeadlinePill";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const DELETE_AT = 120;
 
@@ -20,8 +30,10 @@ export function BookmarkCard({ bookmark }: { bookmark: Bookmark }) {
   const { update, remove } = useBookmarks();
   const [dx, setDx] = useState(0);
   const [swiping, setSwiping] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const start = useRef<{ x: number; y: number } | null>(null);
   const locked = useRef(false);
+  const deleting = useRef(false);
 
   function onPointerDown(e: React.PointerEvent) {
     if (e.pointerType === "mouse") return;
@@ -49,13 +61,25 @@ export function BookmarkCard({ bookmark }: { bookmark: Bookmark }) {
     start.current = null;
     setSwiping(false);
     if (dx >= DELETE_AT) {
-      setDx(400);
-      window.setTimeout(() => {
-        remove(bookmark.id);
-        toast("Bookmark deleted");
-      }, 150);
+      setDx(DELETE_AT);
+      setConfirmOpen(true);
       return;
     }
+    setDx(0);
+  }
+
+  function confirmDelete() {
+    deleting.current = true;
+    setConfirmOpen(false);
+    setDx(400);
+    window.setTimeout(() => {
+      remove(bookmark.id);
+      toast("Bookmark deleted");
+    }, 150);
+  }
+
+  function cancelDelete() {
+    setConfirmOpen(false);
     setDx(0);
   }
 
@@ -152,6 +176,43 @@ export function BookmarkCard({ bookmark }: { bookmark: Bookmark }) {
           </div>
         </Link>
       </div>
+
+      <AlertDialog
+        open={confirmOpen}
+        onOpenChange={(open) => {
+          if (!open && !deleting.current) cancelDelete();
+          deleting.current = false;
+        }}
+      >
+        <AlertDialogContent className="w-[calc(100%-2rem)] max-w-[22rem] rounded-3xl border-border bg-popover p-6 text-popover-foreground">
+          <AlertDialogHeader className="items-center text-center">
+            <div className="grid size-12 place-items-center rounded-full bg-destructive/15 text-destructive">
+              <Trash2 className="size-5" />
+            </div>
+            <AlertDialogTitle className="mt-1">Delete bookmark?</AlertDialogTitle>
+            <AlertDialogDescription>
+              <span className="font-medium text-foreground">
+                {bookmark.title || bookmark.domain}
+              </span>{" "}
+              will be removed permanently. This can&apos;t be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-2 flex-row gap-2 sm:justify-stretch">
+            <AlertDialogCancel
+              onClick={cancelDelete}
+              className="mt-0 h-12 flex-1 rounded-2xl border-border"
+            >
+              Keep it
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="h-12 flex-1 rounded-2xl bg-destructive text-destructive-foreground shadow-none hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
