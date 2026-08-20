@@ -35,9 +35,9 @@ function JoinAlbum() {
   useEffect(() => {
     if (!authReady || !user) return;
     databases
-      .getDocument<AlbumPreview & { $id: string }>(DATABASE_ID, ALBUMS_COLLECTION_ID, id)
+      .getDocument(DATABASE_ID, ALBUMS_COLLECTION_ID, id)
       .then((doc) => {
-        setAlbum(doc);
+        setAlbum(doc as unknown as AlbumPreview);
         setStatus("ready");
       })
       .catch(() => setStatus("error"));
