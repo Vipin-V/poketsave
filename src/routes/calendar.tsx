@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { PhoneShell } from "@/components/PhoneShell";
 import { BookmarkCard } from "@/components/BookmarkCard";
 import { AddBookmarkSheet } from "@/components/AddBookmarkSheet";
 import { useBookmarks } from "@/hooks/use-bookmarks";
 import { daysLeft, urgencyOf, type Bookmark } from "@/lib/bookmarks";
+import { dedupeByUrl, loadAlbumVisibility } from "@/lib/album-visibility";
 
 export const Route = createFileRoute("/calendar")({
   head: () => ({
@@ -41,9 +42,23 @@ const dotColor: Record<string, string> = {
 function CalendarView() {
   const { bookmarks: allBookmarks, ready, add } = useBookmarks();
   const [open, setOpen] = useState(false);
+  const [calendarAlbumIds, setCalendarAlbumIds] = useState<Set<string>>(new Set());
 
-  // Album bookmarks live under Albums, not here.
-  const bookmarks = useMemo(() => allBookmarks.filter((b) => !b.albumId), [allBookmarks]);
+  // Client-only: matches the read-after-hydration pattern used for the
+  // localStorage-backed guest bookmark list, avoiding an SSR/client mismatch.
+  useEffect(() => {
+    setCalendarAlbumIds(loadAlbumVisibility("calendar"));
+  }, []);
+
+  // Album bookmarks live under Albums by default — unless the album has been
+  // opted into the personal calendar from its own page. De-duped by url: an
+  // album bookmark "added to album" from a personal one is a separate copy,
+  // so an opted-in album can otherwise list the same link twice.
+  const bookmarks = useMemo(
+    () =>
+      dedupeByUrl(allBookmarks.filter((b) => !b.albumId || calendarAlbumIds.has(b.albumId))),
+    [allBookmarks, calendarAlbumIds],
+  );
   const today = new Date();
   const [cursor, setCursor] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [selected, setSelected] = useState<string | null>(iso(today));

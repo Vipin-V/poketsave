@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, LogOut, Menu, Trash2, UserPlus } from "lucide-react";
+import { ArrowLeft, Bookmark, CalendarDays, LogOut, Menu, Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import type { Models } from "appwrite";
 import { PhoneShell } from "@/components/PhoneShell";
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -26,6 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { teams } from "@/integrations/appwrite/client";
 import { shareLink } from "@/lib/share";
+import { clearAlbumVisibility, loadAlbumVisibility, setAlbumVisibility } from "@/lib/album-visibility";
 import { useAuth } from "@/hooks/use-auth";
 import { useAlbums } from "@/hooks/use-albums";
 import { useBookmarks } from "@/hooks/use-bookmarks";
@@ -45,14 +47,40 @@ function AlbumDetail() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { albums, ready: albumsReady, remove, leave } = useAlbums();
-  const { bookmarks, add } = useBookmarks();
+  const { bookmarks, add, removeAlbumBookmarks } = useBookmarks();
   const [addOpen, setAddOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [members, setMembers] = useState<Models.Membership[]>([]);
+  const [inCalendar, setInCalendar] = useState(false);
+  const [inLibrary, setInLibrary] = useState(false);
 
   const album = albums.find((a) => a.id === id);
   const isOwner = album?.ownerId === user?.$id;
   const albumBookmarks = useMemo(() => bookmarks.filter((b) => b.albumId === id), [bookmarks, id]);
+
+  useEffect(() => {
+    if (!album) return;
+    setInCalendar(loadAlbumVisibility("calendar").has(album.id));
+    setInLibrary(loadAlbumVisibility("library").has(album.id));
+  }, [album?.id]);
+
+  function toggleCalendar(checked: boolean) {
+    if (!album) return;
+    setInCalendar(checked);
+    setAlbumVisibility("calendar", album.id, checked);
+    toast(
+      checked
+        ? "This album's job deadlines will show in your Calendar"
+        : "Removed from your Calendar",
+    );
+  }
+
+  function toggleLibrary(checked: boolean) {
+    if (!album) return;
+    setInLibrary(checked);
+    setAlbumVisibility("library", album.id, checked);
+    toast(checked ? "This album's bookmarks will show in your Library" : "Removed from your Library");
+  }
 
   async function invite() {
     if (!album) return;
@@ -122,6 +150,20 @@ function AlbumDetail() {
             >
               <UserPlus className="size-4 text-primary" /> Invite people
             </DropdownMenuItem>
+            <DropdownMenuCheckboxItem
+              checked={inLibrary}
+              onCheckedChange={toggleLibrary}
+              className="gap-2 rounded-xl py-2.5 pl-8 focus:bg-accent"
+            >
+              <Bookmark className="size-4 text-primary" /> Show in Library
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={inCalendar}
+              onCheckedChange={toggleCalendar}
+              className="gap-2 rounded-xl py-2.5 pl-8 focus:bg-accent"
+            >
+              <CalendarDays className="size-4 text-primary" /> Show in Calendar
+            </DropdownMenuCheckboxItem>
             <DropdownMenuSeparator />
             {isOwner ? (
               <DropdownMenuItem
@@ -133,7 +175,11 @@ function AlbumDetail() {
             ) : (
               <DropdownMenuItem
                 onClick={() => {
-                  void leave(album).then(() => navigate({ to: "/albums" }));
+                  void leave(album).then(() => {
+                    removeAlbumBookmarks(album.id);
+                    clearAlbumVisibility(album.id);
+                    navigate({ to: "/albums" });
+                  });
                 }}
                 className="gap-2 rounded-xl py-2.5 text-destructive focus:bg-destructive/10 focus:text-destructive"
               >
@@ -222,7 +268,11 @@ function AlbumDetail() {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                void remove(album).then(() => navigate({ to: "/albums" }));
+                void remove(album).then(() => {
+                  removeAlbumBookmarks(album.id);
+                  clearAlbumVisibility(album.id);
+                  navigate({ to: "/albums" });
+                });
               }}
               className="h-12 flex-1 rounded-2xl bg-destructive text-destructive-foreground shadow-none hover:bg-destructive/90"
             >

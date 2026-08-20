@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search, Clock } from "lucide-react";
 import { PhoneShell } from "@/components/PhoneShell";
 import { BookmarkCard } from "@/components/BookmarkCard";
@@ -7,6 +7,7 @@ import { AddBookmarkSheet } from "@/components/AddBookmarkSheet";
 import { Input } from "@/components/ui/input";
 import { useBookmarks } from "@/hooks/use-bookmarks";
 import { CATEGORIES, daysLeft, type Category } from "@/lib/bookmarks";
+import { dedupeByUrl, loadAlbumVisibility } from "@/lib/album-visibility";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -32,10 +33,23 @@ function Library() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Category | "all">("all");
+  const [libraryAlbumIds, setLibraryAlbumIds] = useState<Set<string>>(new Set());
 
-  // Album bookmarks live under Albums, not here — otherwise adding one to an
-  // album would make it show up twice: once in the album, once in Library.
-  const bookmarks = useMemo(() => allBookmarks.filter((b) => !b.albumId), [allBookmarks]);
+  // Client-only: matches the read-after-hydration pattern used for the
+  // localStorage-backed guest bookmark list, avoiding an SSR/client mismatch.
+  useEffect(() => {
+    setLibraryAlbumIds(loadAlbumVisibility("library"));
+  }, []);
+
+  // Album bookmarks live under Albums by default — unless the album has been
+  // opted into the personal library from its own page. De-duped by url: an
+  // album bookmark "added to album" from a personal one is a separate copy,
+  // so an opted-in album can otherwise list the same link twice.
+  const bookmarks = useMemo(
+    () =>
+      dedupeByUrl(allBookmarks.filter((b) => !b.albumId || libraryAlbumIds.has(b.albumId))),
+    [allBookmarks, libraryAlbumIds],
+  );
 
   const expiring = useMemo(
     () =>

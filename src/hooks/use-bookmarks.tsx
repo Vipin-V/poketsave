@@ -111,6 +111,7 @@ type BookmarksApi = {
   add: (b: Bookmark, teamId?: string, ownerId?: string) => void;
   update: (id: string, patch: Partial<Bookmark>) => void;
   remove: (id: string) => void;
+  removeAlbumBookmarks: (albumId: string) => void;
 };
 
 const BookmarksContext = createContext<BookmarksApi | null>(null);
@@ -308,8 +309,25 @@ export function BookmarksProvider({ children }: { children: ReactNode }) {
     [user],
   );
 
+  // Local-only cleanup — no Appwrite calls here. Called after an album is
+  // deleted (its documents are already being removed server-side; this just
+  // makes them disappear immediately instead of waiting for each realtime
+  // delete event to trickle in) and after leaving an album (nothing gets
+  // deleted server-side there — other members still need those documents —
+  // but this session lost read access, so its cached copies are now stale
+  // and would otherwise keep showing in Library/Calendar until next reload).
+  const removeAlbumBookmarks = useCallback((albumId: string) => {
+    setBookmarks((prev) => {
+      const next = prev.filter((b) => b.albumId !== albumId);
+      saveBookmarks(next);
+      return next;
+    });
+  }, []);
+
   return (
-    <BookmarksContext.Provider value={{ bookmarks, ready, add, update, remove }}>
+    <BookmarksContext.Provider
+      value={{ bookmarks, ready, add, update, remove, removeAlbumBookmarks }}
+    >
       {children}
     </BookmarksContext.Provider>
   );
