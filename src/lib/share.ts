@@ -51,7 +51,10 @@ export async function shareLink(
 ): Promise<"shared" | "copied" | "cancelled" | "failed"> {
   if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
     try {
-      await navigator.share({ title: opts.title, text: opts.text, url });
+      const data: ShareData = { url };
+      if (opts.title) data.title = opts.title;
+      if (opts.text) data.text = opts.text;
+      await navigator.share(data);
       return "shared";
     } catch (err) {
       if ((err as DOMException)?.name === "AbortError") return "cancelled";
