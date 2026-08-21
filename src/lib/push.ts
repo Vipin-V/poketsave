@@ -56,7 +56,7 @@ export async function disableDeadlineAlerts() {
 // converted to UTC before it's saved and converted back for display.
 // Matches the default the cron falls back to when a user has no
 // preference saved yet (see api/cron/deadline-notifications.ts).
-export const DEFAULT_NOTIFY_HOUR_UTC = 9;
+export const DEFAULT_NOTIFY_HOUR_UTC = 14;
 
 export function localHourToUtcHour(localHour: number): number {
   const d = new Date();

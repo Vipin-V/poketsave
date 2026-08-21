@@ -19,7 +19,7 @@ import webpush from "web-push";
 // no server-side way to know who opted an album in. Extending this to
 // albums would need that preference to move server-side first.
 
-const DEFAULT_NOTIFY_HOUR_UTC = 9;
+const DEFAULT_NOTIFY_HOUR_UTC = 14;
 
 type BookmarkDoc = Models.Document & {
   category: string;
