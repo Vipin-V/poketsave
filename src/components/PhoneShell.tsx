@@ -1,5 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
+  BellRing,
   Bookmark,
   Briefcase,
   CalendarDays,
@@ -19,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { AccountButton } from "./AccountButton";
+import { NotificationsButton } from "./NotificationsButton";
 
 const TABS = [
   { to: "/", icon: Bookmark, label: "Self", match: (p: string) => p === "/" },
@@ -48,6 +50,7 @@ export function PhoneShell({
   const left = TABS.slice(0, 2);
   const right = TABS.slice(3);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-[26rem] flex-col">
@@ -77,6 +80,12 @@ export function PhoneShell({
                 >
                   <User className="size-4 text-primary" /> Profile
                 </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setNotificationsOpen(true)}
+                  className="gap-2 rounded-xl py-2.5 focus:bg-accent"
+                >
+                  <BellRing className="size-4 text-primary" /> Notifications
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild className="gap-2 rounded-xl py-2.5 focus:bg-accent">
                   <Link to="/favorites">
                     <Star className="size-4 text-primary" /> Favourites
@@ -91,6 +100,11 @@ export function PhoneShell({
               </DropdownMenuContent>
             </DropdownMenu>
             <AccountButton open={accountOpen} onOpenChange={setAccountOpen} hideTrigger />
+            <NotificationsButton
+              open={notificationsOpen}
+              onOpenChange={setNotificationsOpen}
+              onSignInRequested={() => setAccountOpen(true)}
+            />
           </div>
         )}
         {children}
