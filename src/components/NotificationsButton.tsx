@@ -52,11 +52,13 @@ export function NotificationsButton({ open, onOpenChange, onSignInRequested }: P
 
   async function changeNotifyHour(localHour: number) {
     if (!user) return;
+    const previousUtcHour = notifyHourUtc;
     const utcHour = localHourToUtcHour(localHour);
     setNotifyHourUtc(utcHour);
     try {
-      await setNotifyHour(user, utcHour);
+      await setNotifyHour(utcHour);
     } catch {
+      setNotifyHourUtc(previousUtcHour);
       toast("Couldn't update notification time — try again.");
     }
   }
@@ -66,7 +68,7 @@ export function NotificationsButton({ open, onOpenChange, onSignInRequested }: P
     setTogglingAlerts(true);
     try {
       if (checked) {
-        const result = await enableDeadlineAlerts(user);
+        const result = await enableDeadlineAlerts();
         if (result === "enabled") {
           setAlertsOn(true);
           toast("Deadline alerts on — 4 days before, 1 day before, and the day of.");
@@ -78,7 +80,7 @@ export function NotificationsButton({ open, onOpenChange, onSignInRequested }: P
           toast("Deadline alerts aren't set up yet.");
         }
       } else {
-        await disableDeadlineAlerts(user);
+        await disableDeadlineAlerts();
         setAlertsOn(false);
         toast("Deadline alerts off.");
       }
@@ -93,7 +95,7 @@ export function NotificationsButton({ open, onOpenChange, onSignInRequested }: P
     if (!user) return;
     setTogglingEmailAlerts(true);
     try {
-      await setEmailAlerts(user, checked);
+      await setEmailAlerts(checked);
       setEmailAlertsOn(checked);
       toast(checked ? `Email alerts on — sent to ${user.email}.` : "Email alerts off.");
     } catch {

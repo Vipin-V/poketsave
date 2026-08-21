@@ -1,4 +1,3 @@
-import type { Models } from "appwrite";
 import { account } from "@/integrations/appwrite/client";
 
 export const pushSupported =
@@ -19,9 +18,7 @@ export type EnableResult = "enabled" | "unsupported" | "denied" | "not_configure
 // subscribes to push — then saves the subscription on the user's own
 // Appwrite account prefs so the cron job can look it up later. Uses the
 // signed-in user's own session (no admin key needed for this step).
-export async function enableDeadlineAlerts(
-  user: Models.User<Models.DefaultPreferences>,
-): Promise<EnableResult> {
+export async function enableDeadlineAlerts(): Promise<EnableResult> {
   if (!pushSupported) return "unsupported";
   const publicKey = import.meta.env["VITE_VAPID_PUBLIC_KEY"] as string | undefined;
   if (!publicKey) return "not_configured";
@@ -38,15 +35,21 @@ export async function enableDeadlineAlerts(
       applicationServerKey: urlBase64ToUint8Array(publicKey) as BufferSource,
     }));
 
-  await account.updatePrefs({ ...user.prefs, pushSubscription: subscription.toJSON() });
+  // Re-fetch prefs right before writing rather than trusting a caller-held
+  // user object — it may be stale from an earlier fetch, and merging onto
+  // it would silently undo any other pref saved since then (e.g. the
+  // notify hour or email toggle).
+  const current = await account.get();
+  await account.updatePrefs({ ...current.prefs, pushSubscription: subscription.toJSON() });
   return "enabled";
 }
 
-export async function disableDeadlineAlerts(user: Models.User<Models.DefaultPreferences>) {
+export async function disableDeadlineAlerts() {
   const registration = await navigator.serviceWorker.getRegistration();
   const subscription = await registration?.pushManager.getSubscription();
   if (subscription) await subscription.unsubscribe();
-  await account.updatePrefs({ ...user.prefs, pushSubscription: null });
+  const current = await account.get();
+  await account.updatePrefs({ ...current.prefs, pushSubscription: null });
 }
 
 // The cron job runs on UTC hours, so the user's chosen local hour is
@@ -67,15 +70,14 @@ export function utcHourToLocalHour(utcHour: number): number {
   return d.getHours();
 }
 
-export async function setNotifyHour(user: Models.User<Models.DefaultPreferences>, utcHour: number) {
-  await account.updatePrefs({ ...user.prefs, notifyHour: utcHour });
+export async function setNotifyHour(utcHour: number) {
+  const current = await account.get();
+  await account.updatePrefs({ ...current.prefs, notifyHour: utcHour });
 }
 
 // Email alerts need no browser permission — just a preference the cron job
 // reads before emailing the account's own address.
-export async function setEmailAlerts(
-  user: Models.User<Models.DefaultPreferences>,
-  enabled: boolean,
-) {
-  await account.updatePrefs({ ...user.prefs, emailAlerts: enabled });
+export async function setEmailAlerts(enabled: boolean) {
+  const current = await account.get();
+  await account.updatePrefs({ ...current.prefs, emailAlerts: enabled });
 }
