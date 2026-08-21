@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react";
-import { User as UserIcon, LogOut, Loader2, Check, CloudUpload, BellRing } from "lucide-react";
+import {
+  User as UserIcon,
+  LogOut,
+  Loader2,
+  Check,
+  CloudUpload,
+  BellRing,
+  Mail,
+} from "lucide-react";
 import { toast } from "sonner";
 import { OAuthProvider } from "appwrite";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -20,6 +28,7 @@ import {
   disableDeadlineAlerts,
   enableDeadlineAlerts,
   localHourToUtcHour,
+  setEmailAlerts,
   setNotifyHour,
   utcHourToLocalHour,
 } from "@/lib/push";
@@ -47,12 +56,15 @@ export function AccountButton({ open: openProp, onOpenChange, hideTrigger }: Pro
   const [signingOut, setSigningOut] = useState(false);
   const [alertsOn, setAlertsOn] = useState(false);
   const [togglingAlerts, setTogglingAlerts] = useState(false);
+  const [emailAlertsOn, setEmailAlertsOn] = useState(false);
+  const [togglingEmailAlerts, setTogglingEmailAlerts] = useState(false);
   const [notifyHourUtc, setNotifyHourUtc] = useState(DEFAULT_NOTIFY_HOUR_UTC);
 
   const name = user?.name || user?.email || "";
 
   useEffect(() => {
     setAlertsOn(Boolean(user?.prefs?.["pushSubscription"]));
+    setEmailAlertsOn(Boolean(user?.prefs?.["emailAlerts"]));
     setNotifyHourUtc(Number(user?.prefs?.["notifyHour"] ?? DEFAULT_NOTIFY_HOUR_UTC));
   }, [user]);
 
@@ -92,6 +104,20 @@ export function AccountButton({ open: openProp, onOpenChange, hideTrigger }: Pro
       toast("Couldn't update deadline alerts — try again.");
     } finally {
       setTogglingAlerts(false);
+    }
+  }
+
+  async function toggleEmailAlerts(checked: boolean) {
+    if (!user) return;
+    setTogglingEmailAlerts(true);
+    try {
+      await setEmailAlerts(user, checked);
+      setEmailAlertsOn(checked);
+      toast(checked ? `Email alerts on — sent to ${user.email}.` : "Email alerts off.");
+    } catch {
+      toast("Couldn't update email alerts — try again.");
+    } finally {
+      setTogglingEmailAlerts(false);
     }
   }
 
@@ -184,11 +210,27 @@ export function AccountButton({ open: openProp, onOpenChange, hideTrigger }: Pro
                     onCheckedChange={(checked) => void toggleAlerts(checked)}
                   />
                 </div>
+                <div className="mt-3 flex items-center gap-3 border-t border-border pt-3">
+                  <div className="grid size-9 shrink-0 place-items-center rounded-full bg-primary/15 text-primary">
+                    <Mail className="size-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold">Email alerts</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      Same reminders, sent to {user.email}
+                    </p>
+                  </div>
+                  <Switch
+                    checked={emailAlertsOn}
+                    disabled={togglingEmailAlerts}
+                    onCheckedChange={(checked) => void toggleEmailAlerts(checked)}
+                  />
+                </div>
                 <div className="mt-3 flex items-center justify-between gap-3 border-t border-border pt-3">
                   <p className="text-xs text-muted-foreground">Send alerts around</p>
                   <Select
                     value={String(utcHourToLocalHour(notifyHourUtc))}
-                    disabled={!alertsOn}
+                    disabled={!alertsOn && !emailAlertsOn}
                     onValueChange={(value) => void changeNotifyHour(Number(value))}
                   >
                     <SelectTrigger className="h-8 w-28 rounded-xl text-xs">

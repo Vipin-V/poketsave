@@ -4,12 +4,14 @@ import webpush from "web-push";
 
 // Runs hourly via Vercel Cron (see vercel.json). Finds every personal job,
 // internship or event bookmark whose deadline is exactly 4, 1 or 0 days
-// away and pushes a notification to whoever saved it, if they've turned
-// deadline alerts on — but only during the one hour of the day (UTC) they
-// chose, so each user gets notified once per matching bookmark per day
-// rather than on every hourly run. Once a job/internship is marked applied,
-// an interview/exam date can be added, which gets the same 4/1/0-day
-// reminders as the original deadline did.
+// away and notifies whoever saved it — by push, email, or both, depending
+// on what they've turned on — but only during the one hour of the day
+// (UTC) they chose, so each user gets notified once per matching bookmark
+// per day rather than on every hourly run. Once a job/internship is marked
+// applied, an interview/exam date can be added, which gets the same
+// 4/1/0-day reminders as the original deadline did. Multiple due bookmarks
+// for the same user in the same run are combined into a single digest
+// email rather than one email each.
 //
 // Scoped to personal bookmarks only: album bookmarks don't carry a single
 // owner, and the "show this album in my Calendar" preference is stored in
@@ -44,6 +46,49 @@ function ownerIdFromPermissions(permissions: string[]): string | null {
   return null;
 }
 
+function escapeHtml(s: string): string {
+  return s.replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string,
+  );
+}
+
+type DigestItem = { title: string; body: string; url: string };
+
+function digestEmailHtml(items: DigestItem[], siteUrl: string): string {
+  const rows = items
+    .map(
+      (item) => `<tr><td style="padding:14px 0;border-bottom:1px solid #e6e6e6">
+        <a href="${siteUrl}${item.url}" style="color:#0f172a;text-decoration:none;font-size:15px;font-weight:600">${escapeHtml(item.title)}</a>
+        <div style="color:#64748b;font-size:13px;margin-top:2px">${escapeHtml(item.body)}</div>
+      </td></tr>`,
+    )
+    .join("");
+
+  return `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:480px;margin:0 auto;padding:32px 20px;color:#0f172a">
+    <p style="margin:0 0 4px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#0d9488;font-weight:700">PoketSave</p>
+    <h1 style="margin:0 0 20px;font-size:20px">${items.length} deadline${items.length === 1 ? "" : "s"} coming up</h1>
+    <table style="width:100%;border-collapse:collapse">${rows}</table>
+    <a href="${siteUrl}/jobs" style="display:inline-block;margin-top:24px;padding:11px 22px;background:#0d9488;color:#fff;border-radius:12px;text-decoration:none;font-weight:600;font-size:14px">Open PoketSave</a>
+  </div>`;
+}
+
+async function sendDigestEmail(
+  resendApiKey: string,
+  from: string,
+  to: string,
+  items: DigestItem[],
+  siteUrl: string,
+) {
+  const subject = items.length === 1 ? items[0]!.title : `${items.length} deadlines coming up`;
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${resendApiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ from, to, subject, html: digestEmailHtml(items, siteUrl) }),
+  });
+  if (!res.ok) throw new Error(`resend ${res.status}: ${await res.text()}`);
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.headers.authorization !== `Bearer ${process.env["CRON_SECRET"]}`) {
     res.status(401).json({ ok: false, error: "unauthorized" });
@@ -58,6 +103,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const vapidPublicKey = process.env["VITE_VAPID_PUBLIC_KEY"];
   const vapidPrivateKey = process.env["VAPID_PRIVATE_KEY"];
   const vapidSubject = process.env["VAPID_SUBJECT"];
+  // Email is an independent, optional channel: if these aren't set, the
+  // cron just skips email and keeps sending push as before.
+  const resendApiKey = process.env["RESEND_API_KEY"];
+  const resendFrom = process.env["RESEND_FROM_EMAIL"];
+  const siteUrl = (
+    process.env["SITE_URL"] ||
+    (process.env["VERCEL_URL"] ? `https://${process.env["VERCEL_URL"]}` : "")
+  ).replace(/\/$/, "");
+  const emailConfigured = Boolean(resendApiKey && resendFrom && siteUrl);
 
   if (
     !endpoint ||
@@ -119,20 +173,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     cursor = last.$id;
   }
 
-  let notified = 0;
-  const prefsCache = new Map<string, Models.DefaultPreferences | null>();
+  let pushed = 0;
+  let emailed = 0;
+  const usersCache = new Map<string, Models.User<Models.DefaultPreferences> | null>();
+  const emailDigests = new Map<string, { to: string; items: DigestItem[] }>();
 
   for (const { doc, ownerId, daysLeft: left, kind } of dueBookmarks) {
-    if (!prefsCache.has(ownerId)) {
+    if (!usersCache.has(ownerId)) {
       try {
-        prefsCache.set(ownerId, await users.getPrefs<Models.DefaultPreferences>(ownerId));
+        usersCache.set(ownerId, await users.get<Models.DefaultPreferences>(ownerId));
       } catch {
-        prefsCache.set(ownerId, null);
+        usersCache.set(ownerId, null);
       }
     }
-    const prefs = prefsCache.get(ownerId);
+    const owner = usersCache.get(ownerId);
+    const prefs = owner?.prefs;
     const subscription = prefs?.["pushSubscription"] as webpush.PushSubscription | undefined;
-    if (!subscription) continue;
+    const wantsEmail = emailConfigured && Boolean(prefs?.["emailAlerts"]) && Boolean(owner?.email);
+    if (!subscription && !wantsEmail) continue;
 
     const notifyHour = Number(prefs?.["notifyHour"] ?? DEFAULT_NOTIFY_HOUR_UTC);
     if (new Date().getUTCHours() !== notifyHour) continue;
@@ -156,26 +214,42 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               ? `Closes tomorrow — apply before ${doc.deadline}`
               : `Closes in ${left} days — apply before ${doc.deadline}`;
 
-    const payload = JSON.stringify({
-      title: doc.title || "A saved link",
-      body,
-      url: `/bookmark/${doc.$id}`,
-    });
+    const url = `/bookmark/${doc.$id}`;
+    const title = doc.title || "A saved link";
 
-    try {
-      await webpush.sendNotification(subscription, payload);
-      notified++;
-    } catch (err) {
-      const statusCode = (err as { statusCode?: number }).statusCode;
-      if (statusCode === 404 || statusCode === 410) {
-        // Subscription is gone (browser data cleared, unsubscribed elsewhere,
-        // etc.) — clear it so future runs don't keep retrying it.
-        await users
-          .updatePrefs(ownerId, { ...prefs, pushSubscription: null })
-          .catch(() => undefined);
+    if (subscription) {
+      try {
+        await webpush.sendNotification(subscription, JSON.stringify({ title, body, url }));
+        pushed++;
+      } catch (err) {
+        const statusCode = (err as { statusCode?: number }).statusCode;
+        if (statusCode === 404 || statusCode === 410) {
+          // Subscription is gone (browser data cleared, unsubscribed elsewhere,
+          // etc.) — clear it so future runs don't keep retrying it.
+          await users
+            .updatePrefs(ownerId, { ...prefs, pushSubscription: null })
+            .catch(() => undefined);
+        }
+      }
+    }
+
+    if (wantsEmail) {
+      const digest = emailDigests.get(ownerId) ?? { to: owner!.email, items: [] };
+      digest.items.push({ title, body, url });
+      emailDigests.set(ownerId, digest);
+    }
+  }
+
+  if (resendApiKey && resendFrom && siteUrl) {
+    for (const { to, items } of emailDigests.values()) {
+      try {
+        await sendDigestEmail(resendApiKey, resendFrom, to, items, siteUrl);
+        emailed++;
+      } catch {
+        // best-effort; a failed email shouldn't block other users' emails
       }
     }
   }
 
-  res.status(200).json({ ok: true, checked: dueBookmarks.length, notified });
+  res.status(200).json({ ok: true, checked: dueBookmarks.length, pushed, emailed });
 }

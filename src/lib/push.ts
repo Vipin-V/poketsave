@@ -70,3 +70,12 @@ export function utcHourToLocalHour(utcHour: number): number {
 export async function setNotifyHour(user: Models.User<Models.DefaultPreferences>, utcHour: number) {
   await account.updatePrefs({ ...user.prefs, notifyHour: utcHour });
 }
+
+// Email alerts need no browser permission — just a preference the cron job
+// reads before emailing the account's own address.
+export async function setEmailAlerts(
+  user: Models.User<Models.DefaultPreferences>,
+  enabled: boolean,
+) {
+  await account.updatePrefs({ ...user.prefs, emailAlerts: enabled });
+}
