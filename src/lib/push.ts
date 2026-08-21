@@ -58,16 +58,22 @@ export async function disableDeadlineAlerts() {
 // preference saved yet (see api/cron/deadline-notifications.ts).
 export const DEFAULT_NOTIFY_HOUR_UTC = 14;
 
+// Timezones with a half-hour (or quarter-hour) UTC offset, like IST
+// (UTC+5:30), can't map every whole local hour to a distinct whole UTC
+// hour without rounding somewhere. Rounding the offset itself to the
+// nearest hour once, then applying it as a fixed shift both ways, keeps
+// the two functions exact inverses of each other for all 24 choices —
+// unlike rounding each converted value separately, which drifts.
+function localUtcOffsetHours(): number {
+  return Math.round(-new Date().getTimezoneOffset() / 60);
+}
+
 export function localHourToUtcHour(localHour: number): number {
-  const d = new Date();
-  d.setHours(localHour, 0, 0, 0);
-  return d.getUTCHours();
+  return (localHour - localUtcOffsetHours() + 24) % 24;
 }
 
 export function utcHourToLocalHour(utcHour: number): number {
-  const d = new Date();
-  d.setUTCHours(utcHour, 0, 0, 0);
-  return d.getHours();
+  return (utcHour + localUtcOffsetHours() + 24) % 24;
 }
 
 export async function setNotifyHour(utcHour: number) {
