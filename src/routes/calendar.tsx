@@ -5,7 +5,13 @@ import { PhoneShell } from "@/components/PhoneShell";
 import { BookmarkCard } from "@/components/BookmarkCard";
 import { AddBookmarkSheet } from "@/components/AddBookmarkSheet";
 import { useBookmarks } from "@/hooks/use-bookmarks";
-import { REMINDER_CATEGORIES, daysLeft, urgencyOf, type Bookmark } from "@/lib/bookmarks";
+import {
+  REMINDER_CATEGORIES,
+  countdownDate,
+  daysLeft,
+  urgencyOf,
+  type Bookmark,
+} from "@/lib/bookmarks";
 import { dedupeByUrl, loadAlbumVisibility } from "@/lib/album-visibility";
 
 export const Route = createFileRoute("/calendar")({
@@ -66,8 +72,13 @@ function CalendarView() {
   const byDate = useMemo(() => {
     const map = new Map<string, Bookmark[]>();
     for (const b of bookmarks) {
-      if (!REMINDER_CATEGORIES.includes(b.category) || !b.deadline) continue;
-      map.set(b.deadline, [...(map.get(b.deadline) ?? []), b]);
+      if (!REMINDER_CATEGORIES.includes(b.category)) continue;
+      // Once applied (job/internship), pin to the interview/exam date
+      // instead of the now-moot deadline, if one's been scheduled.
+      const date =
+        b.applied && b.category !== "event" && b.interviewDate ? b.interviewDate : b.deadline;
+      if (!date) continue;
+      map.set(date, [...(map.get(date) ?? []), b]);
     }
     return map;
   }, [bookmarks]);
@@ -86,14 +97,11 @@ function CalendarView() {
   const upcoming = useMemo(
     () =>
       bookmarks
-        .filter(
-          (b) =>
-            REMINDER_CATEGORIES.includes(b.category) &&
-            b.deadline &&
-            !b.applied &&
-            daysLeft(b.deadline) >= 0,
-        )
-        .sort((a, b) => daysLeft(a.deadline!) - daysLeft(b.deadline!))
+        .filter((b) => {
+          const date = countdownDate(b);
+          return date && daysLeft(date) >= 0;
+        })
+        .sort((a, b) => daysLeft(countdownDate(a)!) - daysLeft(countdownDate(b)!))
         .slice(0, 3),
     [bookmarks],
   );

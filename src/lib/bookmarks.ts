@@ -91,6 +91,17 @@ export function saveBookmarks(list: Bookmark[]) {
   window.dispatchEvent(new CustomEvent("pocket:bookmarks"));
 }
 
+// The date a bookmark's countdown (Jobs "closing soon" list, Calendar
+// "upcoming" list) should be based on. Once a job/internship is marked
+// applied, the original deadline is moot — an interview/exam date, if one
+// has been scheduled, takes over. Events reuse `applied` for "attending",
+// so they're left out here just like before once attending is checked.
+export function countdownDate(b: Bookmark): string | undefined {
+  if (!REMINDER_CATEGORIES.includes(b.category)) return undefined;
+  if (b.applied) return b.category !== "event" ? b.interviewDate : undefined;
+  return b.deadline;
+}
+
 export function daysLeft(deadline: string): number {
   const end = new Date(`${deadline}T23:59:59`);
   const now = new Date();

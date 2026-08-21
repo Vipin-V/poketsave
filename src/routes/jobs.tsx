@@ -5,7 +5,7 @@ import { BookmarkCard } from "@/components/BookmarkCard";
 import { AddBookmarkSheet } from "@/components/AddBookmarkSheet";
 import { ShareButton } from "@/components/ShareButton";
 import { useBookmarks } from "@/hooks/use-bookmarks";
-import { daysLeft } from "@/lib/bookmarks";
+import { countdownDate, daysLeft } from "@/lib/bookmarks";
 import { dedupeByUrl } from "@/lib/album-visibility";
 
 export const Route = createFileRoute("/jobs")({
@@ -39,8 +39,11 @@ function Jobs() {
   const { active, rest } = useMemo(() => {
     const jobs = bookmarks.filter((b) => b.category === "job" || b.category === "internship");
     const withDate = jobs
-      .filter((b) => b.deadline && !b.applied && daysLeft(b.deadline!) >= 0)
-      .sort((a, b) => daysLeft(a.deadline!) - daysLeft(b.deadline!));
+      .filter((b) => {
+        const date = countdownDate(b);
+        return date && daysLeft(date) >= 0;
+      })
+      .sort((a, b) => daysLeft(countdownDate(a)!) - daysLeft(countdownDate(b)!));
     const others = jobs.filter((b) => !withDate.includes(b));
     return { active: withDate, rest: others };
   }, [bookmarks]);
