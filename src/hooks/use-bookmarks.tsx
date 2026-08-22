@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { ID, Permission, Query, Role, type Models } from "appwrite";
 import { loadBookmarks, saveBookmarks, type Bookmark, type Category } from "@/lib/bookmarks";
 import {
+  ALBUMS_COLLECTION_ID,
   BOOKMARKS_COLLECTION_ID,
   DATABASE_ID,
   client,
@@ -82,6 +83,31 @@ function bookmarkToData(b: Partial<Bookmark>) {
   if ("favorite" in b) data["favorite"] = b.favorite ?? false;
   if ("albumId" in b) data["albumId"] = b.albumId ?? null;
   return data;
+}
+
+// Shared by both the initial save and the offline-retry reconciliation below,
+// so a bookmark re-uploaded after a failed first attempt gets the same team
+// read/update access as one that saved on the first try, instead of quietly
+// falling back to owner-only permissions.
+function permissionsForBookmark(
+  userId: string,
+  team?: { teamId: string; ownerId?: string | undefined },
+) {
+  if (!team) {
+    return [
+      Permission.read(Role.user(userId)),
+      Permission.update(Role.user(userId)),
+      Permission.delete(Role.user(userId)),
+    ];
+  }
+  return [
+    Permission.read(Role.team(team.teamId)),
+    Permission.update(Role.team(team.teamId)),
+    Permission.delete(Role.user(userId)),
+    ...(team.ownerId && team.ownerId !== userId
+      ? [Permission.delete(Role.user(team.ownerId))]
+      : []),
+  ];
 }
 
 // Appwrite caps a single list call at 100 documents, so a library bigger
@@ -159,6 +185,26 @@ export function BookmarksProvider({ children }: { children: ReactNode }) {
         const cloudUrls = new Set(cloud.map((b) => b.url));
         const toUpload = local.filter((b) => !cloudIds.has(b.id) && !cloudUrls.has(b.url));
 
+        // A bookmark stuck local-only because its first save failed (e.g.
+        // Appwrite was unreachable) may belong to a shared album — look up
+        // each album's team so it's re-created with team read/update access
+        // instead of silently becoming owner-only on retry.
+        const albumIds = [...new Set(toUpload.map((b) => b.albumId).filter(Boolean))] as string[];
+        const albumTeams = new Map<string, { teamId: string; ownerId: string }>();
+        await Promise.all(
+          albumIds.map(async (albumId) => {
+            try {
+              const doc = await databases.getDocument<
+                Models.Document & { teamId: string; ownerId: string }
+              >(DATABASE_ID, ALBUMS_COLLECTION_ID, albumId);
+              albumTeams.set(albumId, { teamId: doc.teamId, ownerId: doc.ownerId });
+            } catch {
+              // Album was deleted, or is still unreachable — falls back to
+              // owner-only permissions for this bookmark below, same as before.
+            }
+          }),
+        );
+
         const uploaded = await Promise.all(
           toUpload.map((b) =>
             databases.createDocument<BookmarkDoc>(
@@ -166,11 +212,7 @@ export function BookmarksProvider({ children }: { children: ReactNode }) {
               BOOKMARKS_COLLECTION_ID,
               ID.custom(b.id),
               bookmarkToData(b) as Omit<BookmarkDoc, keyof Models.Document>,
-              [
-                Permission.read(Role.user(user.$id)),
-                Permission.update(Role.user(user.$id)),
-                Permission.delete(Role.user(user.$id)),
-              ],
+              permissionsForBookmark(user.$id, b.albumId ? albumTeams.get(b.albumId) : undefined),
             ),
           ),
         );
@@ -243,25 +285,13 @@ export function BookmarksProvider({ children }: { children: ReactNode }) {
           saveBookmarks(next);
           return next;
         });
-        const permissions = teamId
-          ? [
-              Permission.read(Role.team(teamId)),
-              Permission.update(Role.team(teamId)),
-              Permission.delete(Role.user(user.$id)),
-              ...(ownerId && ownerId !== user.$id ? [Permission.delete(Role.user(ownerId))] : []),
-            ]
-          : [
-              Permission.read(Role.user(user.$id)),
-              Permission.update(Role.user(user.$id)),
-              Permission.delete(Role.user(user.$id)),
-            ];
         void databases
           .createDocument<BookmarkDoc>(
             DATABASE_ID,
             BOOKMARKS_COLLECTION_ID,
             ID.custom(b.id),
             bookmarkToData(b) as Omit<BookmarkDoc, keyof Models.Document>,
-            permissions,
+            permissionsForBookmark(user.$id, teamId ? { teamId, ownerId } : undefined),
           )
           .catch(() => toast("Couldn't save that to your account — it's kept on this device."));
       } else {
