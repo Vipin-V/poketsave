@@ -29,10 +29,10 @@ export type Bookmark = {
 export const CATEGORIES: { value: Category; label: string }[] = [
   { value: "job", label: "Jobs" },
   { value: "internship", label: "Internships" },
-  { value: "reading", label: "Reading" },
+  { value: "website", label: "Websites" },
   { value: "social", label: "Social" },
   { value: "event", label: "Events" },
-  { value: "website", label: "Websites" },
+  { value: "reading", label: "Reading" },
 ];
 
 export const categoryLabel = (c: Category) =>
