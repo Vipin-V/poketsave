@@ -33,9 +33,11 @@ type BookmarkDoc = Models.Document & {
 const PAGE_SIZE = 100;
 
 function daysLeft(deadline: string): number {
-  const end = new Date(`${deadline}T23:59:59`);
+  const [y, m, d] = deadline.split("-").map(Number);
+  const end = Date.UTC(y!, m! - 1, d!);
   const now = new Date();
-  return Math.ceil((end.getTime() - now.getTime()) / 86_400_000);
+  const startOfToday = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  return Math.round((end - startOfToday) / 86_400_000);
 }
 
 function ownerIdFromPermissions(permissions: string[]): string | null {

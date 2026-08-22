@@ -103,9 +103,11 @@ export function countdownDate(b: Bookmark): string | undefined {
 }
 
 export function daysLeft(deadline: string): number {
-  const end = new Date(`${deadline}T23:59:59`);
+  const [y, m, d] = deadline.split("-").map(Number);
+  const end = new Date(y!, m! - 1, d!).getTime();
   const now = new Date();
-  return Math.ceil((end.getTime() - now.getTime()) / 86_400_000);
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  return Math.round((end - startOfToday) / 86_400_000);
 }
 
 export type Urgency = "expired" | "critical" | "soon" | "ok";
