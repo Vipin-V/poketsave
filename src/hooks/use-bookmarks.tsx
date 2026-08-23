@@ -183,7 +183,14 @@ export function BookmarksProvider({ children }: { children: ReactNode }) {
         const cloud = documents.map((doc) => docToBookmark(doc, user.$id));
         const cloudIds = new Set(cloud.map((b) => b.id));
         const cloudUrls = new Set(cloud.map((b) => b.url));
-        const toUpload = local.filter((b) => !cloudIds.has(b.id) && !cloudUrls.has(b.url));
+        // Only bookmarks explicitly flagged as never having synced get
+        // re-uploaded here. A local bookmark missing from `cloud` without
+        // that flag was synced before and has since been deleted on another
+        // device/browser — re-uploading it would silently resurrect it
+        // (and push it back out to every other device via realtime).
+        const toUpload = local.filter(
+          (b) => b.pendingSync && !cloudIds.has(b.id) && !cloudUrls.has(b.url),
+        );
 
         // A bookmark stuck local-only because its first save failed (e.g.
         // Appwrite was unreachable) may belong to a shared album — look up
@@ -280,8 +287,13 @@ export function BookmarksProvider({ children }: { children: ReactNode }) {
     // bookmark and the album owner can remove it, everyone else can't.
     (b: Bookmark, teamId?: string, ownerId?: string) => {
       if (user) {
+        // Flagged pending until the create confirms — see the reconciliation
+        // effect above for why this flag matters (it's what tells a later
+        // sync this bookmark still needs uploading, rather than having been
+        // deleted elsewhere in the meantime).
+        const pending = { ...b, pendingSync: true };
         setBookmarks((prev) => {
-          const next = [b, ...prev];
+          const next = [pending, ...prev];
           saveBookmarks(next);
           return next;
         });
@@ -293,6 +305,14 @@ export function BookmarksProvider({ children }: { children: ReactNode }) {
             bookmarkToData(b) as Omit<BookmarkDoc, keyof Models.Document>,
             permissionsForBookmark(user.$id, teamId ? { teamId, ownerId } : undefined),
           )
+          .then((doc) => {
+            const synced = docToBookmark(doc, user.$id);
+            setBookmarks((prev) => {
+              const next = prev.map((x) => (x.id === b.id ? synced : x));
+              saveBookmarks(next);
+              return next;
+            });
+          })
           .catch(() => toast("Couldn't save that to your account — it's kept on this device."));
       } else {
         saveBookmarks([b, ...loadBookmarks()]);

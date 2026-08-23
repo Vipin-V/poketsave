@@ -24,6 +24,8 @@ export type Bookmark = {
   albumId?: string | undefined;
   /* false only for album bookmarks the current user didn't add and doesn't own the album for */
   canDelete?: boolean | undefined;
+  /* true only while this bookmark's cloud write hasn't been confirmed yet (offline create) */
+  pendingSync?: boolean | undefined;
 };
 
 export const CATEGORIES: { value: Category; label: string }[] = [
