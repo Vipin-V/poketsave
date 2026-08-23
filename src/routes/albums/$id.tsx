@@ -92,7 +92,7 @@ function AlbumDetail() {
     const url = `${window.location.origin}/albums/join/${album.id}`;
     const result = await shareLink(url, {
       title: album.name,
-      text: `Join "${album.name}" on Pocket`,
+      text: `Join "${album.name}" on PoketSave`,
     });
     if (result === "copied") toast("Invite link copied — send it to anyone you want in.");
     if (result === "failed") toast("Couldn't create an invite link right now.");

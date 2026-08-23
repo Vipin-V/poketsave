@@ -37,7 +37,7 @@ export const Route = createFileRoute("/bookmark/$id")({
     meta: [
       { title: "Saved link — PoketSave" },
       { name: "description", content: "Preview, notes and deadline details for a saved bookmark." },
-      { property: "og:title", content: "Saved link — Pocket" },
+      { property: "og:title", content: "Saved link — PoketSave" },
       { property: "og:description", content: "Your saved link with notes, tags and deadline." },
     ],
   }),

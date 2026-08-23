@@ -21,7 +21,7 @@ export const Route = createFileRoute("/albums/")({
         name: "description",
         content: "Create shared bookmarks to save and track links together with other people.",
       },
-      { property: "og:title", content: "Shared bookmarks — Pocket" },
+      { property: "og:title", content: "Shared bookmarks — PoketSave" },
       {
         property: "og:description",
         content: "Collaborate on shared bookmarks with friends, classmates or teammates.",

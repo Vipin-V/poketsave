@@ -19,7 +19,7 @@ export const Route = createFileRoute("/jobs")({
         content:
           "Every job and internship link you saved, sorted by how soon the application window closes, with countdowns and applied tracking.",
       },
-      { property: "og:title", content: "Job deadlines — Pocket" },
+      { property: "og:title", content: "Job deadlines — PoketSave" },
       {
         property: "og:description",
         content: "Track saved job and internship applications and never miss a closing date.",
@@ -65,7 +65,7 @@ function Jobs() {
         <ShareButton
           bookmarks={closing}
           label="Share"
-          heading="Jobs & internships closing soon (shared from Pocket):"
+          heading="Jobs & internships closing soon (shared from PoketSave):"
         />
       </header>
 

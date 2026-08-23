@@ -88,7 +88,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "A mobile bookmark vault for links, posts and job listings with deadline countdowns.",
       },
       { name: "theme-color", content: "#0b0d12" },
-      { property: "og:title", content: "Pocket" },
+      { property: "og:title", content: "PoketSave" },
       { property: "og:description", content: "Save links. Find them later. Never miss a deadline." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

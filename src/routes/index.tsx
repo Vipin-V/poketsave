@@ -18,7 +18,7 @@ export const Route = createFileRoute("/")({
         content:
           "A mobile bookmark vault for X posts, Reddit threads, articles and job listings — with countdown alerts before applications close.",
       },
-      { property: "og:title", content: "Pocket — Save links, never lose a job deadline" },
+      { property: "og:title", content: "PoketSave — Save links, never lose a job deadline" },
       {
         property: "og:description",
         content: "Save any link on your phone and find it again in seconds. Job deadlines included.",

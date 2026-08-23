@@ -17,7 +17,7 @@ export const Route = createFileRoute("/favorites")({
         content:
           "The saved links you starred, kept one tap away so you can revisit them instantly.",
       },
-      { property: "og:title", content: "Favorites — Pocket" },
+      { property: "og:title", content: "Favorites — PoketSave" },
       {
         property: "og:description",
         content: "Your starred bookmarks, always one tap away.",
@@ -43,7 +43,7 @@ function Favorites() {
           <p className="text-xs tracking-[0.22em] text-muted-foreground uppercase">Starred</p>
           <h1 className="mt-1 text-3xl font-bold text-balance-tight">Favorites</h1>
         </div>
-        <ShareButton bookmarks={favorites} heading="My favorite links from Pocket:" />
+        <ShareButton bookmarks={favorites} heading="My favorite links from PoketSave:" />
       </header>
 
       {ready && favorites.length === 0 ? (

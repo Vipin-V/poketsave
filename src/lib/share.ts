@@ -27,7 +27,7 @@ export async function shareBookmarks(
 ): Promise<"shared" | "copied" | "cancelled" | "failed"> {
   if (list.length === 0) return "failed";
   const text = shareText(list, opts.heading);
-  const title = opts.title ?? "Pocket bookmarks";
+  const title = opts.title ?? "PoketSave bookmarks";
 
   if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
     try {

@@ -23,7 +23,7 @@ export const Route = createFileRoute("/calendar")({
         content:
           "A month-by-month calendar of your saved job, internship and event dates, so you can see at a glance which ones are coming up.",
       },
-      { property: "og:title", content: "Deadline calendar — Pocket" },
+      { property: "og:title", content: "Deadline calendar — PoketSave" },
       {
         property: "og:description",
         content: "See every saved job, internship and event date laid out on a calendar.",
