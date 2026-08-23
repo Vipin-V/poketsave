@@ -78,7 +78,7 @@ function Library() {
   return (
     <PhoneShell onAdd={() => setOpen(true)}>
       <header className="mb-5">
-        <p className="text-xs tracking-[0.22em] text-muted-foreground uppercase">Pocket</p>
+        <p className="text-xs tracking-[0.22em] text-muted-foreground uppercase">PoketSave</p>
         <h1 className="mt-1 text-3xl font-bold text-balance-tight">Your saved corner of the internet</h1>
       </header>
 
