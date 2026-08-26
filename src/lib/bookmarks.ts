@@ -40,6 +40,16 @@ export const CATEGORIES: { value: Category; label: string }[] = [
 export const categoryLabel = (c: Category) =>
   CATEGORIES.find((x) => x.value === c)?.label ?? "Websites";
 
+// Fields worth searching on, flattened into one string — shared by the
+// plain-text filter and by AI search (which embeds this same text).
+export function searchableText(
+  b: Pick<Bookmark, "title" | "description" | "notes" | "domain" | "company" | "role" | "tags">,
+): string {
+  return [b.title, b.description, b.notes, b.domain, b.company, b.role, ...b.tags]
+    .filter(Boolean)
+    .join(" ");
+}
+
 // Categories whose deadline/date field should trigger push reminders and
 // show up on the Calendar tab.
 export const REMINDER_CATEGORIES: Category[] = ["job", "internship", "event"];

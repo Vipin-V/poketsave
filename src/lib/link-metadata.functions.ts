@@ -44,7 +44,12 @@ export const fetchLinkMetadata = createServerFn({ method: "POST" })
       };
 
       const titleTag = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? "";
-      const title = meta("og:title") || meta("twitter:title") || decode(titleTag.trim());
+      let title = meta("og:title") || meta("twitter:title") || decode(titleTag.trim());
+      // Social embeds (Instagram, X, Threads, ...) often stuff the whole post
+      // caption into og:title as `Name on Instagram: "caption..."` — keep
+      // just the "who/where" header instead of the caption text.
+      const embedCaption = title.match(/^(.+ on .+?):\s*["“]/);
+      if (embedCaption?.[1]) title = embedCaption[1];
       const description =
         meta("og:description") || meta("twitter:description") || meta("description");
       let image = meta("og:image") || meta("twitter:image");
@@ -80,6 +85,8 @@ function decode(s: string) {
     .replace(/&quot;/g, '"')
     .replace(/&#0?39;|&apos;|&#x27;/g, "'")
     .replace(/&nbsp;/g, " ")
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(parseInt(dec, 10)))
     .replace(/\s+/g, " ")
     .trim();
 }

@@ -6,9 +6,27 @@ import { BookmarkCard } from "@/components/BookmarkCard";
 import { AddBookmarkSheet } from "@/components/AddBookmarkSheet";
 import { Input } from "@/components/ui/input";
 import { useBookmarks } from "@/hooks/use-bookmarks";
-import { CATEGORIES, daysLeft, type Category } from "@/lib/bookmarks";
+import { CATEGORIES, daysLeft, searchableText, type Category } from "@/lib/bookmarks";
 import { dedupeByUrl, loadAlbumVisibility } from "@/lib/album-visibility";
-import { aiSearchBookmarks } from "@/lib/ai-search.functions";
+import { embedTexts } from "@/lib/embed.functions";
+import {
+  cosineSimilarity,
+  loadEmbeddingCache,
+  saveEmbeddingCache,
+  textHash,
+} from "@/lib/embeddings";
+import { rerankBookmarks } from "@/lib/rerank.functions";
+
+// Embedding cosine scores sit well above 0 even for unrelated bookmarks and
+// don't separate "real match" from "noise" cleanly enough on their own (e.g.
+// a cloud-learning reel can score close to a government-job posting for a
+// "government job" query). So embeddings only narrow the whole library down
+// to a shortlist — below MATCH_FLOOR there's nothing worth asking about at
+// all — and an LLM makes the final relevance call on just that shortlist.
+// Bounded shortlist size keeps cost flat no matter how big the library gets.
+const MATCH_FLOOR = 0.65;
+const MAX_CANDIDATES = 20;
+const EMBED_BATCH_SIZE = 20;
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -22,7 +40,8 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "PoketSave — Save links, never lose a job deadline" },
       {
         property: "og:description",
-        content: "Save any link on your phone and find it again in seconds. Job deadlines included.",
+        content:
+          "Save any link on your phone and find it again in seconds. Job deadlines included.",
       },
     ],
   }),
@@ -49,8 +68,7 @@ function Library() {
   // album bookmark "added to album" from a personal one is a separate copy,
   // so an opted-in album can otherwise list the same link twice.
   const bookmarks = useMemo(
-    () =>
-      dedupeByUrl(allBookmarks.filter((b) => !b.albumId || libraryAlbumIds.has(b.albumId))),
+    () => dedupeByUrl(allBookmarks.filter((b) => !b.albumId || libraryAlbumIds.has(b.albumId))),
     [allBookmarks, libraryAlbumIds],
   );
 
@@ -77,30 +95,65 @@ function Library() {
 
     const q = query.trim().toLowerCase();
     if (!q) return byFilter;
-    return byFilter.filter((b) =>
-      [b.title, b.description, b.notes, b.domain, b.company, b.role, ...b.tags]
-        .filter(Boolean)
-        .some((v) => String(v).toLowerCase().includes(q)),
-    );
+    return byFilter.filter((b) => searchableText(b).toLowerCase().includes(q));
   }, [bookmarks, query, filter, aiIds]);
 
+  // Semantic search in two passes: (1) retrieval — each bookmark's text is
+  // embedded once (cached in localStorage, keyed by a hash of that text so
+  // an edit re-embeds it), the query is embedded, and cosine similarity
+  // narrows the whole library down to a shortlist; (2) an LLM reranks just
+  // that shortlist for the final relevance call. Neither pass ever sends
+  // the full bookmark list anywhere, so cost stays flat as the library grows.
   async function askAi() {
     const q = query.trim();
     if (!q) return;
     setAiLoading(true);
     try {
-      const { ids } = await aiSearchBookmarks({
+      const cache = loadEmbeddingCache();
+      const withText = bookmarks.map((b) => ({ id: b.id, text: searchableText(b) }));
+      const missing = withText.filter(({ id, text }) => cache[id]?.hash !== textHash(text));
+
+      for (let i = 0; i < missing.length; i += EMBED_BATCH_SIZE) {
+        const batch = missing.slice(i, i + EMBED_BATCH_SIZE);
+        const { vectors } = await embedTexts({
+          data: { texts: batch.map((m) => m.text), taskType: "RETRIEVAL_DOCUMENT" },
+        });
+        batch.forEach((m, j) => {
+          const vector = vectors[j];
+          if (vector) cache[m.id] = { hash: textHash(m.text), vector };
+        });
+        saveEmbeddingCache(cache);
+      }
+
+      const { vectors: queryVectors } = await embedTexts({
+        data: { texts: [q], taskType: "RETRIEVAL_QUERY" },
+      });
+      const queryVector = queryVectors[0];
+      if (!queryVector) {
+        setAiIds([]);
+        return;
+      }
+
+      const scored = bookmarks
+        .map((b) => ({ id: b.id, entry: cache[b.id] }))
+        .filter((x): x is { id: string; entry: { hash: string; vector: number[] } } => !!x.entry)
+        .map((x) => ({ id: x.id, score: cosineSimilarity(queryVector, x.entry.vector) }))
+        .sort((a, b) => b.score - a.score);
+
+      const topScore = scored[0]?.score ?? 0;
+      if (topScore < MATCH_FLOOR) {
+        setAiIds([]);
+        return;
+      }
+
+      const shortlist = scored.slice(0, MAX_CANDIDATES);
+      const byId = new Map(withText.map((w) => [w.id, w.text]));
+      const { ids } = await rerankBookmarks({
         data: {
           query: q,
-          bookmarks: bookmarks.map((b) => ({
-            id: b.id,
-            title: b.title,
-            description: b.description,
-            notes: b.notes,
-            domain: b.domain,
-            tags: b.tags,
-            company: b.company,
-            role: b.role,
+          candidates: shortlist.map((s) => ({
+            id: s.id,
+            text: (byId.get(s.id) ?? "").slice(0, 500),
           })),
         },
       });
@@ -114,7 +167,9 @@ function Library() {
     <PhoneShell onAdd={() => setOpen(true)}>
       <header className="mb-5">
         <p className="text-xs tracking-[0.22em] text-muted-foreground uppercase">PoketSave</p>
-        <h1 className="mt-1 text-3xl font-bold text-balance-tight">Your saved corner of the internet</h1>
+        <h1 className="mt-1 text-3xl font-bold text-balance-tight">
+          Your saved corner of the internet
+        </h1>
       </header>
 
       <div className="relative mb-4">
