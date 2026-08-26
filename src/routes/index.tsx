@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Search, Clock } from "lucide-react";
+import { Search, Clock, Sparkles } from "lucide-react";
 import { PhoneShell } from "@/components/PhoneShell";
 import { BookmarkCard } from "@/components/BookmarkCard";
 import { AddBookmarkSheet } from "@/components/AddBookmarkSheet";
@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { useBookmarks } from "@/hooks/use-bookmarks";
 import { CATEGORIES, daysLeft, type Category } from "@/lib/bookmarks";
 import { dedupeByUrl, loadAlbumVisibility } from "@/lib/album-visibility";
+import { aiSearchBookmarks } from "@/lib/ai-search.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -34,6 +35,8 @@ function Library() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Category | "all">("all");
   const [libraryAlbumIds, setLibraryAlbumIds] = useState<Set<string>>(new Set());
+  const [aiIds, setAiIds] = useState<string[] | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
 
   // Client-only: matches the read-after-hydration pattern used for the
   // localStorage-backed guest bookmark list, avoiding an SSR/client mismatch.
@@ -65,15 +68,47 @@ function Library() {
   );
 
   const visible = useMemo(() => {
+    const byFilter = bookmarks.filter((b) => filter === "all" || b.category === filter);
+
+    if (aiIds) {
+      const byId = new Map(byFilter.map((b) => [b.id, b]));
+      return aiIds.map((id) => byId.get(id)).filter((b): b is (typeof byFilter)[number] => !!b);
+    }
+
     const q = query.trim().toLowerCase();
-    return bookmarks.filter((b) => {
-      if (filter !== "all" && b.category !== filter) return false;
-      if (!q) return true;
-      return [b.title, b.notes, b.domain, b.company, b.role, ...b.tags]
+    if (!q) return byFilter;
+    return byFilter.filter((b) =>
+      [b.title, b.description, b.notes, b.domain, b.company, b.role, ...b.tags]
         .filter(Boolean)
-        .some((v) => String(v).toLowerCase().includes(q));
-    });
-  }, [bookmarks, query, filter]);
+        .some((v) => String(v).toLowerCase().includes(q)),
+    );
+  }, [bookmarks, query, filter, aiIds]);
+
+  async function askAi() {
+    const q = query.trim();
+    if (!q) return;
+    setAiLoading(true);
+    try {
+      const { ids } = await aiSearchBookmarks({
+        data: {
+          query: q,
+          bookmarks: bookmarks.map((b) => ({
+            id: b.id,
+            title: b.title,
+            description: b.description,
+            notes: b.notes,
+            domain: b.domain,
+            tags: b.tags,
+            company: b.company,
+            role: b.role,
+          })),
+        },
+      });
+      setAiIds(ids);
+    } finally {
+      setAiLoading(false);
+    }
+  }
 
   return (
     <PhoneShell onAdd={() => setOpen(true)}>
@@ -86,10 +121,23 @@ function Library() {
         <Search className="absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search links, tags, notes"
-          className="glass h-12 rounded-2xl pl-10"
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setAiIds(null);
+          }}
+          onKeyDown={(e) => e.key === "Enter" && askAi()}
+          placeholder="Search, or describe what you're looking for"
+          className="glass h-12 rounded-2xl pl-10 pr-11"
         />
+        <button
+          type="button"
+          onClick={askAi}
+          disabled={!query.trim() || aiLoading}
+          title="Ask AI to find it"
+          className="absolute top-1/2 right-3 size-6 -translate-y-1/2 text-muted-foreground transition-colors disabled:opacity-40 enabled:hover:text-primary"
+        >
+          <Sparkles className={`size-4 ${aiLoading ? "animate-pulse" : ""}`} />
+        </button>
       </div>
 
       {expiring.length > 0 && (
