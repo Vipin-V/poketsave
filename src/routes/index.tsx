@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Search, Clock, Sparkles } from "lucide-react";
+import { Search, Clock, Sparkles, X } from "lucide-react";
 import { PhoneShell } from "@/components/PhoneShell";
 import { BookmarkCard } from "@/components/BookmarkCard";
 import { AddBookmarkSheet } from "@/components/AddBookmarkSheet";
@@ -27,6 +27,8 @@ import { rerankBookmarks } from "@/lib/rerank.functions";
 const MATCH_FLOOR = 0.65;
 const MAX_CANDIDATES = 20;
 const EMBED_BATCH_SIZE = 20;
+
+const AI_HINT_KEY = "poketsave.ai-search-hint-dismissed";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -56,12 +58,19 @@ function Library() {
   const [libraryAlbumIds, setLibraryAlbumIds] = useState<Set<string>>(new Set());
   const [aiIds, setAiIds] = useState<string[] | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [showAiHint, setShowAiHint] = useState(false);
 
   // Client-only: matches the read-after-hydration pattern used for the
   // localStorage-backed guest bookmark list, avoiding an SSR/client mismatch.
   useEffect(() => {
     setLibraryAlbumIds(loadAlbumVisibility("library"));
+    setShowAiHint(localStorage.getItem(AI_HINT_KEY) !== "1");
   }, []);
+
+  function dismissAiHint() {
+    localStorage.setItem(AI_HINT_KEY, "1");
+    setShowAiHint(false);
+  }
 
   // Album bookmarks live under Albums by default — unless the album has been
   // opted into the personal library from its own page. De-duped by url: an
@@ -107,6 +116,7 @@ function Library() {
   async function askAi() {
     const q = query.trim();
     if (!q) return;
+    dismissAiHint();
     setAiLoading(true);
     try {
       const cache = loadEmbeddingCache();
@@ -189,11 +199,33 @@ function Library() {
           onClick={askAi}
           disabled={!query.trim() || aiLoading}
           title="Ask AI to find it"
-          className="absolute top-1/2 right-3 size-6 -translate-y-1/2 text-muted-foreground transition-colors disabled:opacity-40 enabled:hover:text-primary"
+          className={`absolute top-1/2 right-2.5 flex size-7 -translate-y-1/2 items-center justify-center rounded-full transition-all duration-200 disabled:opacity-40 disabled:hover:scale-100 ${
+            aiLoading
+              ? "neon-glow bg-primary text-primary-foreground"
+              : "bg-primary/12 text-primary enabled:hover:scale-110 enabled:hover:bg-primary/20 enabled:active:bg-primary enabled:active:text-primary-foreground"
+          }`}
         >
-          <Sparkles className={`size-4 ${aiLoading ? "animate-pulse" : ""}`} />
+          <Sparkles className={`size-3.5 ${aiLoading ? "animate-pulse" : ""}`} />
         </button>
       </div>
+
+      {showAiHint && (
+        <div className="mb-4 flex items-start gap-2 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2.5 text-xs text-muted-foreground">
+          <Sparkles className="mt-0.5 size-3.5 shrink-0 text-primary" />
+          <p className="flex-1">
+            Can't remember the title? Describe it in your own words, then tap the spark to search
+            with AI.
+          </p>
+          <button
+            type="button"
+            onClick={dismissAiHint}
+            aria-label="Dismiss"
+            className="shrink-0 text-muted-foreground/60 transition-colors hover:text-foreground"
+          >
+            <X className="size-3.5" />
+          </button>
+        </div>
+      )}
 
       {expiring.length > 0 && (
         <Link
