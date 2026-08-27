@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Link2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -23,6 +23,7 @@ type Props = {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   initial?: Bookmark;
+  prefill?: { url: string; title?: string };
   onSave: (b: Bookmark) => void;
 };
 
@@ -40,7 +41,7 @@ const empty = {
   deadline: "",
 };
 
-export function AddBookmarkSheet({ open, onOpenChange, initial, onSave }: Props) {
+export function AddBookmarkSheet({ open, onOpenChange, initial, prefill, onSave }: Props) {
   const getMeta = useServerFn(fetchLinkMetadata);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState(() =>
@@ -58,8 +59,17 @@ export function AddBookmarkSheet({ open, onOpenChange, initial, onSave }: Props)
           role: initial.role ?? "",
           deadline: initial.deadline ?? "",
         }
-      : empty,
+      : prefill
+        ? { ...empty, url: prefill.url, title: prefill.title ?? "" }
+        : empty,
   );
+
+  // Shared-link flow: a link came in via the OS share sheet with no
+  // metadata attached yet, so fetch title/image the same way onBlur does.
+  useEffect(() => {
+    if (prefill?.url && !initial) void autofill();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) =>
     setForm((f) => ({ ...f, [k]: v }));

@@ -1,12 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Search, Clock, Sparkles, X } from "lucide-react";
+import { Search, Clock, Sparkles, Share, X } from "lucide-react";
 import { PhoneShell } from "@/components/PhoneShell";
 import { BookmarkCard } from "@/components/BookmarkCard";
 import { AddBookmarkSheet } from "@/components/AddBookmarkSheet";
 import { Input } from "@/components/ui/input";
 import { useBookmarks } from "@/hooks/use-bookmarks";
-import { CATEGORIES, daysLeft, searchableText, type Category } from "@/lib/bookmarks";
+import {
+  CATEGORIES,
+  daysLeft,
+  extractSharedUrl,
+  searchableText,
+  type Category,
+} from "@/lib/bookmarks";
 import { dedupeByUrl, loadAlbumVisibility } from "@/lib/album-visibility";
 import { embedTexts } from "@/lib/embed.functions";
 import {
@@ -29,8 +35,18 @@ const MAX_CANDIDATES = 20;
 const EMBED_BATCH_SIZE = 20;
 
 const AI_HINT_KEY = "poketsave.ai-search-hint-dismissed";
+const SHARE_HINT_KEY = "poketsave.ios-share-hint-dismissed";
+
+// Populated by the OS share sheet (see share_target in site.webmanifest)
+// when a link is shared into the installed PWA from another app.
+type ShareSearch = { url?: string; text?: string; title?: string };
 
 export const Route = createFileRoute("/")({
+  validateSearch: (search: Record<string, unknown>): ShareSearch => ({
+    url: typeof search.url === "string" ? search.url : undefined,
+    text: typeof search.text === "string" ? search.text : undefined,
+    title: typeof search.title === "string" ? search.title : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "PoketSave" },
@@ -52,24 +68,56 @@ export const Route = createFileRoute("/")({
 
 function Library() {
   const { bookmarks: allBookmarks, ready, add } = useBookmarks();
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
   const [open, setOpen] = useState(false);
+  const [sharePrefill, setSharePrefill] = useState<{ url: string; title?: string }>();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Category | "all">("all");
   const [libraryAlbumIds, setLibraryAlbumIds] = useState<Set<string>>(new Set());
   const [aiIds, setAiIds] = useState<string[] | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [showAiHint, setShowAiHint] = useState(false);
+  const [showShareHint, setShowShareHint] = useState(false);
 
   // Client-only: matches the read-after-hydration pattern used for the
   // localStorage-backed guest bookmark list, avoiding an SSR/client mismatch.
   useEffect(() => {
     setLibraryAlbumIds(loadAlbumVisibility("library"));
     setShowAiHint(localStorage.getItem(AI_HINT_KEY) !== "1");
+
+    // iOS Safari has no Web Share Target API, so an installed PWA can never
+    // appear in the native Share Sheet directly — a Shortcut is the only
+    // way in. Only worth mentioning once it's actually installed.
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
+    setShowShareHint(isIOS && isStandalone && localStorage.getItem(SHARE_HINT_KEY) !== "1");
   }, []);
+
+  // A link shared in from another app lands here as query params (Android
+  // share_target). Open the add sheet prefilled, then drop the params so
+  // reloading/back doesn't reopen it.
+  const { url: sharedUrlParam, text: sharedTextParam, title: sharedTitleParam } = search;
+  useEffect(() => {
+    const sharedUrl = extractSharedUrl({
+      url: sharedUrlParam,
+      text: sharedTextParam,
+      title: sharedTitleParam,
+    });
+    if (!sharedUrl) return;
+    setSharePrefill({ url: sharedUrl, title: sharedTitleParam });
+    setOpen(true);
+    void navigate({ search: {}, replace: true });
+  }, [sharedUrlParam, sharedTextParam, sharedTitleParam, navigate]);
 
   function dismissAiHint() {
     localStorage.setItem(AI_HINT_KEY, "1");
     setShowAiHint(false);
+  }
+
+  function dismissShareHint() {
+    localStorage.setItem(SHARE_HINT_KEY, "1");
+    setShowShareHint(false);
   }
 
   // Album bookmarks live under Albums by default — unless the album has been
@@ -174,7 +222,12 @@ function Library() {
   }
 
   return (
-    <PhoneShell onAdd={() => setOpen(true)}>
+    <PhoneShell
+      onAdd={() => {
+        setSharePrefill(undefined);
+        setOpen(true);
+      }}
+    >
       <header className="mb-5">
         <p className="text-xs tracking-[0.22em] text-muted-foreground uppercase">PoketSave</p>
         <h1 className="mt-1 text-3xl font-bold text-balance-tight">
@@ -219,6 +272,26 @@ function Library() {
           <button
             type="button"
             onClick={dismissAiHint}
+            aria-label="Dismiss"
+            className="shrink-0 text-muted-foreground/60 transition-colors hover:text-foreground"
+          >
+            <X className="size-3.5" />
+          </button>
+        </div>
+      )}
+
+      {showShareHint && (
+        <div className="mb-4 flex items-start gap-2 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2.5 text-xs text-muted-foreground">
+          <Share className="mt-0.5 size-3.5 shrink-0 text-primary" />
+          <p className="flex-1">
+            iPhone can't share straight into apps, but a one-time Shortcut fixes that: in Shortcuts,
+            new shortcut → turn on "Show in Share Sheet" → add a URL action set to{" "}
+            <span className="text-foreground">{window.location.origin}/?url=</span> with Shortcut
+            Input inserted at the end → add "Open URLs" using that URL.
+          </p>
+          <button
+            type="button"
+            onClick={dismissShareHint}
             aria-label="Dismiss"
             className="shrink-0 text-muted-foreground/60 transition-colors hover:text-foreground"
           >
@@ -276,7 +349,13 @@ function Library() {
         </div>
       )}
 
-      <AddBookmarkSheet open={open} onOpenChange={setOpen} onSave={add} />
+      <AddBookmarkSheet
+        key={sharePrefill?.url}
+        open={open}
+        onOpenChange={setOpen}
+        prefill={sharePrefill}
+        onSave={add}
+      />
     </PhoneShell>
   );
 }

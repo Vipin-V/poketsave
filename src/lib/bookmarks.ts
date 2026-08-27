@@ -85,6 +85,21 @@ export function normalizeUrl(input: string): string {
   return /^https?:\/\//i.test(v) ? v : `https://${v}`;
 }
 
+// Android's share sheet fills in `url`, `text` or both depending on the
+// sharing app — X/Reddit often only put the link inside `text` alongside a
+// caption. Fall back through each field and pull the first http(s) link out.
+export function extractSharedUrl(fields: {
+  url?: string;
+  text?: string;
+  title?: string;
+}): string | undefined {
+  for (const field of [fields.url, fields.text, fields.title]) {
+    const match = field?.match(/https?:\/\/\S+/);
+    if (match) return match[0];
+  }
+  return undefined;
+}
+
 export function loadBookmarks(): Bookmark[] {
   if (typeof window === "undefined") return [];
   try {
