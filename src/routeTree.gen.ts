@@ -16,6 +16,7 @@ import { Route as JobsRouteImport } from './routes/jobs'
 import { Route as AlbumsIndexRouteImport } from './routes/albums/index'
 import { Route as AlbumsIdRouteImport } from './routes/albums/$id'
 import { Route as BookmarkIdRouteImport } from './routes/bookmark.$id'
+import { Route as CollectionCategoryRouteImport } from './routes/collection.$category'
 import { Route as AlbumsJoinIdRouteImport } from './routes/albums/join.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -53,6 +54,11 @@ const BookmarkIdRoute = BookmarkIdRouteImport.update({
   path: '/bookmark/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CollectionCategoryRoute = CollectionCategoryRouteImport.update({
+  id: '/collection/$category',
+  path: '/collection/$category',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AlbumsJoinIdRoute = AlbumsJoinIdRouteImport.update({
   id: '/albums/join/$id',
   path: '/albums/join/$id',
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/jobs': typeof JobsRoute
   '/albums/$id': typeof AlbumsIdRoute
   '/bookmark/$id': typeof BookmarkIdRoute
+  '/collection/$category': typeof CollectionCategoryRoute
   '/albums/': typeof AlbumsIndexRoute
   '/albums/join/$id': typeof AlbumsJoinIdRoute
 }
@@ -76,6 +83,7 @@ export interface FileRoutesByTo {
   '/jobs': typeof JobsRoute
   '/albums/$id': typeof AlbumsIdRoute
   '/bookmark/$id': typeof BookmarkIdRoute
+  '/collection/$category': typeof CollectionCategoryRoute
   '/albums': typeof AlbumsIndexRoute
   '/albums/join/$id': typeof AlbumsJoinIdRoute
 }
@@ -87,6 +95,7 @@ export interface FileRoutesById {
   '/jobs': typeof JobsRoute
   '/albums/$id': typeof AlbumsIdRoute
   '/bookmark/$id': typeof BookmarkIdRoute
+  '/collection/$category': typeof CollectionCategoryRoute
   '/albums/': typeof AlbumsIndexRoute
   '/albums/join/$id': typeof AlbumsJoinIdRoute
 }
@@ -99,6 +108,7 @@ export interface FileRouteTypes {
     | '/jobs'
     | '/albums/$id'
     | '/bookmark/$id'
+    | '/collection/$category'
     | '/albums/'
     | '/albums/join/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -109,6 +119,7 @@ export interface FileRouteTypes {
     | '/jobs'
     | '/albums/$id'
     | '/bookmark/$id'
+    | '/collection/$category'
     | '/albums'
     | '/albums/join/$id'
   id:
@@ -119,6 +130,7 @@ export interface FileRouteTypes {
     | '/jobs'
     | '/albums/$id'
     | '/bookmark/$id'
+    | '/collection/$category'
     | '/albums/'
     | '/albums/join/$id'
   fileRoutesById: FileRoutesById
@@ -130,6 +142,7 @@ export interface RootRouteChildren {
   JobsRoute: typeof JobsRoute
   AlbumsIdRoute: typeof AlbumsIdRoute
   BookmarkIdRoute: typeof BookmarkIdRoute
+  CollectionCategoryRoute: typeof CollectionCategoryRoute
   AlbumsIndexRoute: typeof AlbumsIndexRoute
   AlbumsJoinIdRoute: typeof AlbumsJoinIdRoute
 }
@@ -185,6 +198,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BookmarkIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/collection/$category': {
+      id: '/collection/$category'
+      path: '/collection/$category'
+      fullPath: '/collection/$category'
+      preLoaderRoute: typeof CollectionCategoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/albums/join/$id': {
       id: '/albums/join/$id'
       path: '/albums/join/$id'
@@ -202,6 +222,7 @@ const rootRouteChildren: RootRouteChildren = {
   JobsRoute: JobsRoute,
   AlbumsIdRoute: AlbumsIdRoute,
   BookmarkIdRoute: BookmarkIdRoute,
+  CollectionCategoryRoute: CollectionCategoryRoute,
   AlbumsIndexRoute: AlbumsIndexRoute,
   AlbumsJoinIdRoute: AlbumsJoinIdRoute,
 }
