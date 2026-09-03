@@ -22,8 +22,9 @@ import {
 type Props = {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  initial?: Bookmark;
-  prefill?: { url: string; title?: string };
+  initial?: Bookmark | undefined;
+  prefill?: { url: string; title?: string | undefined } | undefined;
+
   onSave: (b: Bookmark) => void;
 };
 

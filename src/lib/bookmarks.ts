@@ -89,10 +89,11 @@ export function normalizeUrl(input: string): string {
 // sharing app — X/Reddit often only put the link inside `text` alongside a
 // caption. Fall back through each field and pull the first http(s) link out.
 export function extractSharedUrl(fields: {
-  url?: string;
-  text?: string;
-  title?: string;
+  url?: string | undefined;
+  text?: string | undefined;
+  title?: string | undefined;
 }): string | undefined {
+
   for (const field of [fields.url, fields.text, fields.title]) {
     const match = field?.match(/https?:\/\/\S+/);
     if (match) return match[0];
