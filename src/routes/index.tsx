@@ -295,9 +295,9 @@ function Library() {
       {expiring.length > 0 && !searching && (
         <Link
           to="/jobs"
-          className="glass brutal-press mb-5 flex items-center gap-3 rounded-2xl bg-destructive px-3.5 py-3 text-destructive-foreground"
+          className="glass brutal-press mb-5 flex items-center gap-3 rounded-2xl bg-danger px-3.5 py-3 text-white"
         >
-          <Clock className="size-4 shrink-0" />
+          <Clock className="size-5 shrink-0" strokeWidth={2.6} />
           <p className="text-sm font-bold">
             {expiring.length} application{expiring.length > 1 ? "s" : ""} closing within a week
           </p>
@@ -351,7 +351,7 @@ function Library() {
             <div className="glass mt-5 rounded-2xl px-6 py-10 text-center">
               <h3 className="text-base font-extrabold">Nothing saved yet</h3>
               <p className="mt-2 text-sm font-medium text-muted-foreground">
-                Paste any link above — a post, an article, or a job you want to apply to.
+                Tap the + button below — save a post, an article, or a job you want to apply to.
               </p>
             </div>
           )}
