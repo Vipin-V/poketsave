@@ -295,7 +295,7 @@ function Library() {
       {expiring.length > 0 && !searching && (
         <Link
           to="/jobs"
-          className="glass brutal-press mb-5 flex items-center gap-3 rounded-2xl bg-danger px-3.5 py-3 text-white"
+          className="glass brutal-press mb-5 flex items-center gap-3 rounded-2xl bg-destructive px-3.5 py-3 text-destructive-foreground"
         >
           <Clock className="size-5 shrink-0" strokeWidth={2.6} />
           <p className="text-sm font-bold">
