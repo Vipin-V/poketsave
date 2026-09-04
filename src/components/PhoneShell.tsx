@@ -6,19 +6,23 @@ import {
   CalendarDays,
   Coffee,
   Menu,
+  Moon,
   Plus,
   Star,
+  Sun,
   User,
   Users,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { applyTheme, loadTheme, type Theme } from "@/lib/theme";
 import { AccountButton } from "./AccountButton";
 import { NotificationsButton } from "./NotificationsButton";
 
@@ -51,6 +55,13 @@ export function PhoneShell({
   const right = TABS.slice(3);
   const [accountOpen, setAccountOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [theme, setTheme] = useState<Theme>("dark");
+
+  useEffect(() => {
+    const stored = loadTheme();
+    setTheme(stored);
+    applyTheme(stored);
+  }, []);
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-[26rem] flex-col">
@@ -90,6 +101,26 @@ export function PhoneShell({
                   <Link to="/favorites">
                     <Star className="size-4 text-primary" /> Favourites
                   </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="px-2 pt-1 text-[10px] tracking-[0.18em] text-muted-foreground uppercase">
+                  Theme
+                </DropdownMenuLabel>
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    const next = theme === "dark" ? "light" : "dark";
+                    setTheme(next);
+                    applyTheme(next);
+                  }}
+                  className="gap-2 rounded-xl py-2.5 focus:bg-accent"
+                >
+                  {theme === "dark" ? (
+                    <Sun className="size-4 text-primary" />
+                  ) : (
+                    <Moon className="size-4 text-primary" />
+                  )}
+                  {theme === "dark" ? "Light mode" : "Dark mode"}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild className="gap-2 rounded-xl py-2.5 focus:bg-accent">

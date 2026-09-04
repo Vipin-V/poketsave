@@ -116,9 +116,17 @@ function Library() {
     [allBookmarks, libraryAlbumIds],
   );
 
+  // Closed jobs/internships move out to Jobs → Closed, so they don't count here.
   const counts = useMemo(() => {
     const map = new Map<string, number>();
-    for (const b of bookmarks) map.set(b.category, (map.get(b.category) ?? 0) + 1);
+    for (const b of bookmarks) {
+      const closedJob =
+        (b.category === "job" || b.category === "internship") &&
+        !!b.deadline &&
+        daysLeft(b.deadline) < 0;
+      if (closedJob) continue;
+      map.set(b.category, (map.get(b.category) ?? 0) + 1);
+    }
     return map;
   }, [bookmarks]);
 
