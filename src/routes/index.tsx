@@ -1,12 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Search, Clock, Sparkles, Share, X, Plus, Star } from "lucide-react";
+import { Search, Clock, Sparkles, Share, X, Star } from "lucide-react";
 import { PhoneShell } from "@/components/PhoneShell";
 import { LinkTile } from "@/components/LinkTile";
 import { AddBookmarkSheet } from "@/components/AddBookmarkSheet";
 import { Input } from "@/components/ui/input";
 import { useBookmarks } from "@/hooks/use-bookmarks";
-import { daysLeft, extractSharedUrl, searchableText, normalizeUrl } from "@/lib/bookmarks";
+import { daysLeft, extractSharedUrl, searchableText } from "@/lib/bookmarks";
 import { FOLDERS } from "@/lib/collections";
 import { dedupeByUrl, loadAlbumVisibility } from "@/lib/album-visibility";
 import { embedTexts } from "@/lib/embed.functions";
@@ -67,7 +67,6 @@ function Library() {
   const [sharePrefill, setSharePrefill] = useState<
     { url: string; title?: string | undefined } | undefined
   >();
-  const [paste, setPaste] = useState("");
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [libraryAlbumIds, setLibraryAlbumIds] = useState<Set<string>>(new Set());
@@ -150,13 +149,6 @@ function Library() {
 
   const searching = searchOpen && (query.trim().length > 0 || !!aiIds);
 
-  function savePasted() {
-    const url = paste.trim();
-    if (!url) return;
-    setSharePrefill({ url: normalizeUrl(url) });
-    setPaste("");
-    setOpen(true);
-  }
 
   // Semantic search in two passes: retrieval by cached embeddings, then an
   // LLM rerank of the shortlist.
@@ -235,28 +227,6 @@ function Library() {
         </h1>
       </header>
 
-      <div className="mb-5 flex items-stretch gap-2.5">
-        <div className="glass flex min-w-0 flex-1 items-center gap-2 rounded-2xl px-3">
-          <span className="text-lg font-extrabold text-muted-foreground">#</span>
-          <input
-            value={paste}
-            onChange={(e) => setPaste(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && savePasted()}
-            placeholder="Paste link to save"
-            inputMode="url"
-            className="h-12 min-w-0 flex-1 bg-transparent text-sm font-medium outline-none placeholder:text-muted-foreground"
-          />
-        </div>
-        <button
-          type="button"
-          onClick={savePasted}
-          aria-label="Save pasted link"
-          className="glass brutal-press grid size-[3.25rem] shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground"
-        >
-          <Plus className="size-6" strokeWidth={3} />
-        </button>
-      </div>
-
       <div className="mb-5">
         {searchOpen ? (
           <div className="relative">
@@ -327,7 +297,7 @@ function Library() {
           to="/jobs"
           className="glass brutal-press mb-5 flex items-center gap-3 rounded-2xl bg-destructive px-3.5 py-3 text-destructive-foreground"
         >
-          <Clock className="size-4 shrink-0" />
+          <Clock className="size-5 shrink-0" strokeWidth={2.6} />
           <p className="text-sm font-bold">
             {expiring.length} application{expiring.length > 1 ? "s" : ""} closing within a week
           </p>
@@ -381,7 +351,7 @@ function Library() {
             <div className="glass mt-5 rounded-2xl px-6 py-10 text-center">
               <h3 className="text-base font-extrabold">Nothing saved yet</h3>
               <p className="mt-2 text-sm font-medium text-muted-foreground">
-                Paste any link above — a post, an article, or a job you want to apply to.
+                Tap the + button below — save a post, an article, or a job you want to apply to.
               </p>
             </div>
           )}
@@ -430,7 +400,7 @@ function FolderCard({
           <div
             className={`grid size-11 place-items-center rounded-xl border-2 border-border ${color}`}
           >
-            <Icon className="size-5" strokeWidth={2.4} />
+            <Icon className="size-5 text-primary-foreground" strokeWidth={2.4} />
           </div>
           <span className="text-xs font-bold text-muted-foreground">
             {count} link{count === 1 ? "" : "s"}
