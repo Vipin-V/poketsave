@@ -1,12 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Search, Clock, Sparkles, Share, X, Plus, Star } from "lucide-react";
+import { Search, Clock, Sparkles, Share, X, Star } from "lucide-react";
 import { PhoneShell } from "@/components/PhoneShell";
 import { LinkTile } from "@/components/LinkTile";
 import { AddBookmarkSheet } from "@/components/AddBookmarkSheet";
 import { Input } from "@/components/ui/input";
 import { useBookmarks } from "@/hooks/use-bookmarks";
-import { daysLeft, extractSharedUrl, searchableText, normalizeUrl } from "@/lib/bookmarks";
+import { daysLeft, extractSharedUrl, searchableText } from "@/lib/bookmarks";
 import { FOLDERS } from "@/lib/collections";
 import { dedupeByUrl, loadAlbumVisibility } from "@/lib/album-visibility";
 import { embedTexts } from "@/lib/embed.functions";
@@ -67,7 +67,6 @@ function Library() {
   const [sharePrefill, setSharePrefill] = useState<
     { url: string; title?: string | undefined } | undefined
   >();
-  const [paste, setPaste] = useState("");
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [libraryAlbumIds, setLibraryAlbumIds] = useState<Set<string>>(new Set());
@@ -234,28 +233,6 @@ function Library() {
           Find anytime.
         </h1>
       </header>
-
-      <div className="mb-5 flex items-stretch gap-2.5">
-        <div className="glass flex min-w-0 flex-1 items-center gap-2 rounded-2xl px-3">
-          <span className="text-lg font-extrabold text-muted-foreground">#</span>
-          <input
-            value={paste}
-            onChange={(e) => setPaste(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && savePasted()}
-            placeholder="Paste link to save"
-            inputMode="url"
-            className="h-12 min-w-0 flex-1 bg-transparent text-sm font-medium outline-none placeholder:text-muted-foreground"
-          />
-        </div>
-        <button
-          type="button"
-          onClick={savePasted}
-          aria-label="Save pasted link"
-          className="glass brutal-press grid size-[3.25rem] shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground"
-        >
-          <Plus className="size-6" strokeWidth={3} />
-        </button>
-      </div>
 
       <div className="mb-5">
         {searchOpen ? (
