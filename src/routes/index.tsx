@@ -149,13 +149,6 @@ function Library() {
 
   const searching = searchOpen && (query.trim().length > 0 || !!aiIds);
 
-  function savePasted() {
-    const url = paste.trim();
-    if (!url) return;
-    setSharePrefill({ url: normalizeUrl(url) });
-    setPaste("");
-    setOpen(true);
-  }
 
   // Semantic search in two passes: retrieval by cached embeddings, then an
   // LLM rerank of the shortlist.
