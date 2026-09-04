@@ -58,7 +58,7 @@ function CollectionPage() {
         <div
           className={`grid size-11 shrink-0 place-items-center rounded-xl border-2 border-border ${folder.color}`}
         >
-          <folder.icon className="size-5" strokeWidth={2.4} />
+          <folder.icon className="size-5 text-primary-foreground" strokeWidth={2.4} />
         </div>
         <div className="min-w-0">
           <h1 className="truncate text-xl font-extrabold">{known ? folder.label : "Collection"}</h1>
