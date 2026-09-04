@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { faviconFor, type Bookmark } from "@/lib/bookmarks";
 import { useBookmarks } from "@/hooks/use-bookmarks";
 import { folderFor } from "@/lib/collections";
+import { DeadlineTag } from "./DeadlineTag";
 
 // Grid tile used inside a folder: thumbnail on top, bold title, source below.
 export function LinkTile({ bookmark }: { bookmark: Bookmark }) {
@@ -48,7 +49,8 @@ export function LinkTile({ bookmark }: { bookmark: Bookmark }) {
         </div>
 
         <div className="p-2.5">
-          <h3 className="line-clamp-2 text-[13px] leading-snug font-bold text-balance-tight">
+          <DeadlineTag bookmark={bookmark} />
+          <h3 className="mt-1 line-clamp-2 text-[13px] leading-snug font-bold text-balance-tight">
             {bookmark.title || bookmark.domain}
           </h3>
           <div className="mt-1.5 flex items-center gap-1.5">
