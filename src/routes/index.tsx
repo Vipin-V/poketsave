@@ -400,7 +400,7 @@ function FolderCard({
           <div
             className={`grid size-11 place-items-center rounded-xl border-2 border-border ${color}`}
           >
-            <Icon className="size-5" strokeWidth={2.4} />
+            <Icon className="size-5 text-primary-foreground" strokeWidth={2.4} />
           </div>
           <span className="text-xs font-bold text-muted-foreground">
             {count} link{count === 1 ? "" : "s"}

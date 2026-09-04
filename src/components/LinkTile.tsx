@@ -42,7 +42,7 @@ export function LinkTile({ bookmark }: { bookmark: Bookmark }) {
             />
           ) : (
             <div className="grid size-full place-items-center">
-              <folder.icon className="size-8 text-foreground" strokeWidth={2.4} />
+              <folder.icon className="size-8 text-primary-foreground" strokeWidth={2.4} />
             </div>
           )}
         </div>
