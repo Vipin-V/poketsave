@@ -83,37 +83,37 @@
 
 /* Dark neo-brutalism: ink surfaces, light outlines, same offset shadows. */
 .dark {
-  --background: oklch(0.17 0.025 165);
-  --foreground: oklch(0.95 0.02 150);
-  --card: oklch(0.22 0.03 168);
-  --card-foreground: oklch(0.95 0.02 150);
-  --popover: oklch(0.22 0.03 168);
-  --popover-foreground: oklch(0.95 0.02 150);
-  --primary: oklch(0.85 0.2 152);
-  --primary-foreground: oklch(0.18 0.03 165);
-  --secondary: oklch(0.27 0.035 168);
-  --secondary-foreground: oklch(0.94 0.02 150);
-  --muted: oklch(0.27 0.03 168);
-  --muted-foreground: oklch(0.73 0.04 155);
-  --accent: oklch(0.3 0.05 160);
-  --accent-foreground: oklch(0.96 0.02 150);
+  --background: oklch(0.17 0.005 260);
+  --foreground: oklch(0.96 0.005 260);
+  --card: oklch(0.22 0.006 260);
+  --card-foreground: oklch(0.96 0.005 260);
+  --popover: oklch(0.22 0.006 260);
+  --popover-foreground: oklch(0.96 0.005 260);
+  --primary: oklch(0.87 0.17 92);
+  --primary-foreground: oklch(0.16 0.005 260);
+  --secondary: oklch(0.28 0.008 260);
+  --secondary-foreground: oklch(0.94 0.005 260);
+  --muted: oklch(0.28 0.008 260);
+  --muted-foreground: oklch(0.72 0.01 260);
+  --accent: oklch(0.31 0.01 260);
+  --accent-foreground: oklch(0.96 0.005 260);
   --destructive: oklch(0.62 0.19 20);
-  --destructive-foreground: oklch(0.98 0.01 150);
-  --border: oklch(0.62 0.11 158);
-  --input: oklch(0.62 0.11 158);
-  --ring: oklch(0.85 0.2 152);
-  --neon: oklch(0.85 0.2 152);
+  --destructive-foreground: oklch(0.98 0.005 260);
+  --border: oklch(0.62 0.02 260);
+  --input: oklch(0.62 0.02 260);
+  --ring: oklch(0.87 0.17 92);
+  --neon: oklch(0.87 0.17 92);
   --neon-soft: oklch(0.75 0.15 185);
   --warn: oklch(0.8 0.16 85);
   --danger: oklch(0.65 0.2 25);
-  --surface: oklch(0.22 0.03 168);
-  --surface-strong: oklch(0.25 0.035 168);
+  --surface: oklch(0.22 0.006 260);
+  --surface-strong: oklch(0.25 0.008 260);
   --folder-lime: oklch(0.82 0.19 140);
   --folder-pink: oklch(0.7 0.16 355);
   --folder-violet: oklch(0.68 0.13 290);
   --folder-sky: oklch(0.76 0.12 200);
   --folder-amber: oklch(0.83 0.16 95);
-  --folder-slate: oklch(0.5 0.04 175);
+  --folder-slate: oklch(0.52 0.015 265);
 }
 
 .dark .glass,
