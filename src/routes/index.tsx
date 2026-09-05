@@ -125,7 +125,9 @@ function Library() {
         !!b.deadline &&
         daysLeft(b.deadline) < 0;
       if (closedJob) continue;
-      map.set(b.category, (map.get(b.category) ?? 0) + 1);
+      // Internships count toward the combined "Jobs & Internships" folder.
+      const key = b.category === "internship" ? "job" : b.category;
+      map.set(key, (map.get(key) ?? 0) + 1);
     }
     return map;
   }, [bookmarks]);
@@ -303,10 +305,10 @@ function Library() {
       {expiring.length > 0 && !searching && (
         <Link
           to="/jobs"
-          className="brutal-press mb-5 flex items-center gap-3 rounded-2xl border-2 border-border bg-destructive px-3.5 py-3 text-destructive-foreground shadow-[4px_4px_0_0_var(--border)]"
+          className="brutal-press mb-5 flex items-center gap-3 rounded-2xl border-2 border-border bg-card px-3.5 py-3 shadow-[4px_4px_0_0_var(--border)]"
         >
-          <Clock className="size-5 shrink-0" strokeWidth={2.6} />
-          <p className="text-sm font-bold">
+          <Clock className="size-5 shrink-0 text-destructive" strokeWidth={2.6} />
+          <p className="text-sm font-bold text-destructive">
             {expiring.length} application{expiring.length > 1 ? "s" : ""} closing within a week
           </p>
         </Link>
