@@ -116,12 +116,6 @@
   --folder-slate: oklch(0.52 0.015 265);
 }
 
-.dark .glass,
-.dark .glass-strong,
-.dark .neon-glow {
-  box-shadow: 4px 4px 0 0 color-mix(in oklab, var(--primary) 55%, transparent);
-}
-
 /* Neo-brutalist card: white face, hard black outline, offset drop shadow. */
 @utility glass {
   background: var(--card);
