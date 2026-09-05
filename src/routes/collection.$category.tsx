@@ -6,7 +6,7 @@ import { LinkTile } from "@/components/LinkTile";
 import { AddBookmarkSheet } from "@/components/AddBookmarkSheet";
 import { useBookmarks } from "@/hooks/use-bookmarks";
 import { dedupeByUrl, loadAlbumVisibility } from "@/lib/album-visibility";
-import { FOLDERS, folderFor } from "@/lib/collections";
+import { FOLDERS, folderFor, inFolder } from "@/lib/collections";
 import { daysLeft, type Category } from "@/lib/bookmarks";
 
 export const Route = createFileRoute("/collection/$category")({
@@ -42,7 +42,7 @@ function CollectionPage() {
       dedupeByUrl(
         all.filter(
           (b) =>
-            b.category === category &&
+            inFolder(b.category, category) &&
             (!b.albumId || albumIds.has(b.albumId)) &&
             !(
               (b.category === "job" || b.category === "internship") &&
