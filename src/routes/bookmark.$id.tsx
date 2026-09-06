@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 import {
   ArrowLeft,
@@ -47,6 +47,14 @@ export const Route = createFileRoute("/bookmark/$id")({
 function Detail() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
+  const router = useRouter();
+
+  // Return to wherever the bookmark was opened from (a folder, shared
+  // bookmarks, jobs, calendar…). Fall back to Self on a fresh deep link.
+  function goBack() {
+    if (window.history.state && window.history.length > 1) router.history.back();
+    else navigate({ to: "/" });
+  }
   const { bookmarks, ready, update, remove, add } = useBookmarks();
   const { user } = useAuth();
   const { albums } = useAlbums();
@@ -96,10 +104,10 @@ function Detail() {
       <div className="mb-4 flex items-center justify-between">
         <button
           type="button"
-          onClick={() => navigate({ to: "/" })}
+          onClick={goBack}
           className="flex min-h-11 items-center gap-2 text-sm text-muted-foreground"
         >
-          <ArrowLeft className="size-4" /> Self
+          <ArrowLeft className="size-4" /> Back
         </button>
         <button
           type="button"
@@ -300,7 +308,7 @@ function Detail() {
             destructive
             onClick={() => {
               remove(bookmark.id);
-              navigate({ to: "/" });
+              goBack();
             }}
           >
             <Trash2 className="size-4" />
