@@ -1,4 +1,4 @@
-export type Category = "job" | "internship" | "reading" | "social" | "event" | "website";
+export type Category = "job" | "internship" | "reading" | "social" | "event" | "website" | "travel" | "food";
 
 export type Bookmark = {
   id: string;
@@ -35,6 +35,8 @@ export const CATEGORIES: { value: Category; label: string }[] = [
   { value: "social", label: "Social" },
   { value: "event", label: "Events" },
   { value: "reading", label: "Reading" },
+  { value: "travel", label: "Travel" },
+  { value: "food", label: "Food" },
 ];
 
 export const categoryLabel = (c: Category) =>
@@ -76,6 +78,10 @@ export function guessCategory(url: string): Category {
     return "social";
   if (/(medium\.com|substack|dev\.to|blog|news|arxiv|hashnode|nytimes|theverge)/.test(d))
     return "reading";
+  if (/(tripadvisor|booking\.com|airbnb|expedia|skyscanner|makemytrip|goibibo|uber|lyft)/.test(d))
+    return "travel";
+  if (/(zomato|swiggy|yelp|doordash|ubereats|grubhub|foodnetwork|allrecipes|tasty)/.test(d))
+    return "food";
   return "website";
 }
 
