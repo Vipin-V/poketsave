@@ -104,10 +104,10 @@ function Detail() {
       <div className="mb-4 flex items-center justify-between">
         <button
           type="button"
-          onClick={() => navigate({ to: "/" })}
+          onClick={goBack}
           className="flex min-h-11 items-center gap-2 text-sm text-muted-foreground"
         >
-          <ArrowLeft className="size-4" /> Self
+          <ArrowLeft className="size-4" /> Back
         </button>
         <button
           type="button"
