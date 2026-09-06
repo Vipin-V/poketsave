@@ -1,4 +1,4 @@
-import { BookOpen, Briefcase, CalendarDays, Globe, MessageCircle } from "lucide-react";
+import { BookOpen, Briefcase, CalendarDays, Globe, MessageCircle, Plane, UtensilsCrossed } from "lucide-react";
 import type { Category } from "./bookmarks";
 
 // The Library is organised as folders. Each folder is one bookmark category,
@@ -15,6 +15,8 @@ export const FOLDERS: {
   { category: "job", label: "Jobs & Internships", color: "bg-folder-pink", icon: Briefcase },
   { category: "event", label: "Events", color: "bg-folder-amber", icon: CalendarDays },
   { category: "reading", label: "Reading", color: "bg-folder-slate", icon: BookOpen },
+  { category: "travel", label: "Travel", color: "bg-folder-orange", icon: Plane },
+  { category: "food", label: "Food", color: "bg-folder-rose", icon: UtensilsCrossed },
 ];
 
 // Internships share the Jobs folder — both categories resolve to it.
