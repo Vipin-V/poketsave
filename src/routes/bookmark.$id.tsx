@@ -308,7 +308,7 @@ function Detail() {
             destructive
             onClick={() => {
               remove(bookmark.id);
-              navigate({ to: "/" });
+              goBack();
             }}
           >
             <Trash2 className="size-4" />
