@@ -47,6 +47,14 @@ export const Route = createFileRoute("/bookmark/$id")({
 function Detail() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
+  const router = useRouter();
+
+  // Return to wherever the bookmark was opened from (a folder, shared
+  // bookmarks, jobs, calendar…). Fall back to Self on a fresh deep link.
+  function goBack() {
+    if (window.history.state && window.history.length > 1) router.history.back();
+    else navigate({ to: "/" });
+  }
   const { bookmarks, ready, update, remove, add } = useBookmarks();
   const { user } = useAuth();
   const { albums } = useAlbums();
