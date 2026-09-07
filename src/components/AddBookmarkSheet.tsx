@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Link2, Sparkles } from "lucide-react";
+import { Loader2, Link2, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
@@ -190,13 +190,25 @@ export function AddBookmarkSheet({
 
           <div className="space-y-2">
             <Label htmlFor="title">Title</Label>
-            <Input
-              id="title"
-              value={form.title}
-              onChange={(e) => set("title", e.target.value)}
-              placeholder="What is this?"
-              className="h-12"
-            />
+            <div className="relative">
+              <Input
+                id="title"
+                value={form.title}
+                onChange={(e) => set("title", e.target.value)}
+                placeholder="What is this?"
+                className="h-12 pr-10"
+              />
+              {form.title && (
+                <button
+                  type="button"
+                  aria-label="Clear title"
+                  onClick={() => set("title", "")}
+                  className="absolute top-1/2 right-2 grid size-7 -translate-y-1/2 place-items-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <X className="size-4" />
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -251,7 +263,7 @@ export function AddBookmarkSheet({
                   type="date"
                   value={form.deadline}
                   onChange={(e) => set("deadline", e.target.value)}
-                  className="h-11"
+                  className="block h-11 w-full min-w-0 appearance-none"
                 />
               </div>
             </div>
@@ -276,7 +288,7 @@ export function AddBookmarkSheet({
                   type="date"
                   value={form.deadline}
                   onChange={(e) => set("deadline", e.target.value)}
-                  className="h-11"
+                  className="block h-11 w-full min-w-0 appearance-none"
                 />
               </div>
             </div>
