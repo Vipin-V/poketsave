@@ -92,7 +92,12 @@ function CollectionPage() {
         </div>
       )}
 
-      <AddBookmarkSheet open={open} onOpenChange={setOpen} onSave={add} />
+      <AddBookmarkSheet
+        open={open}
+        onOpenChange={setOpen}
+        onSave={add}
+        defaultCategory={known ? (category as Category) : undefined}
+      />
     </PhoneShell>
   );
 }

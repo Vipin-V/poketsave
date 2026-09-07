@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Link2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -24,6 +24,8 @@ type Props = {
   onOpenChange: (v: boolean) => void;
   initial?: Bookmark | undefined;
   prefill?: { url: string; title?: string | undefined } | undefined;
+  /* pre-selected category when adding from inside a collection folder */
+  defaultCategory?: Category | undefined;
 
   onSave: (b: Bookmark) => void;
 };
@@ -42,9 +44,18 @@ const empty = {
   deadline: "",
 };
 
-export function AddBookmarkSheet({ open, onOpenChange, initial, prefill, onSave }: Props) {
+export function AddBookmarkSheet({
+  open,
+  onOpenChange,
+  initial,
+  prefill,
+  defaultCategory,
+  onSave,
+}: Props) {
   const getMeta = useServerFn(fetchLinkMetadata);
   const [loading, setLoading] = useState(false);
+  /* once the user picks a category by hand, autofill stops overriding it */
+  const categoryTouched = useRef(!!initial);
   const [form, setForm] = useState(() =>
     initial
       ? {
@@ -62,7 +73,7 @@ export function AddBookmarkSheet({ open, onOpenChange, initial, prefill, onSave 
         }
       : prefill
         ? { ...empty, url: prefill.url, title: prefill.title ?? "" }
-        : empty,
+        : { ...empty, category: defaultCategory ?? "website" },
   );
 
   // Shared-link flow: a link came in via the OS share sheet with no
@@ -88,7 +99,7 @@ export function AddBookmarkSheet({ open, onOpenChange, initial, prefill, onSave 
         description: meta.description || f.description,
         image: meta.image || f.image,
         favicon: meta.favicon || f.favicon,
-        category: f.category === "website" ? guessCategory(url) : f.category,
+        category: categoryTouched.current ? f.category : guessCategory(url),
       }));
       if (!meta.ok) toast("Couldn't read that page — add the details yourself.");
     } catch {
@@ -195,7 +206,10 @@ export function AddBookmarkSheet({ open, onOpenChange, initial, prefill, onSave 
                 <button
                   key={c.value}
                   type="button"
-                  onClick={() => set("category", c.value)}
+                  onClick={() => {
+                    categoryTouched.current = true;
+                    set("category", c.value);
+                  }}
                   className={`min-h-11 rounded-xl border px-1 text-xs font-medium transition-colors ${
                     form.category === c.value
                       ? "border-primary/60 bg-primary/15 text-primary"
