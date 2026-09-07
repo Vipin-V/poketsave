@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Link2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -24,6 +24,8 @@ type Props = {
   onOpenChange: (v: boolean) => void;
   initial?: Bookmark | undefined;
   prefill?: { url: string; title?: string | undefined } | undefined;
+  /* pre-selected category when adding from inside a collection folder */
+  defaultCategory?: Category | undefined;
 
   onSave: (b: Bookmark) => void;
 };
