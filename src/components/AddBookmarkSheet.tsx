@@ -99,7 +99,7 @@ export function AddBookmarkSheet({
         description: meta.description || f.description,
         image: meta.image || f.image,
         favicon: meta.favicon || f.favicon,
-        category: f.category === "website" ? guessCategory(url) : f.category,
+        category: categoryTouched.current ? f.category : guessCategory(url),
       }));
       if (!meta.ok) toast("Couldn't read that page — add the details yourself.");
     } catch {
@@ -206,7 +206,10 @@ export function AddBookmarkSheet({
                 <button
                   key={c.value}
                   type="button"
-                  onClick={() => set("category", c.value)}
+                  onClick={() => {
+                    categoryTouched.current = true;
+                    set("category", c.value);
+                  }}
                   className={`min-h-11 rounded-xl border px-1 text-xs font-medium transition-colors ${
                     form.category === c.value
                       ? "border-primary/60 bg-primary/15 text-primary"
