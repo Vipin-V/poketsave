@@ -314,18 +314,43 @@ function Detail() {
           <Pencil className="size-4" />
         </IconAction>
         {bookmark.canDelete !== false && (
-          <IconAction
-            label="Delete"
-            destructive
-            onClick={() => {
-              remove(bookmark.id);
-              goBack();
-            }}
-          >
+          <IconAction label="Delete" destructive onClick={() => setConfirmDelete(true)}>
             <Trash2 className="size-4" />
           </IconAction>
         )}
       </div>
+
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent className="w-[calc(100%-2rem)] max-w-[22rem] rounded-3xl border-border bg-popover p-6 text-popover-foreground">
+          <AlertDialogHeader className="items-center text-center">
+            <div className="grid size-12 place-items-center rounded-full bg-destructive/15 text-destructive">
+              <Trash2 className="size-5" />
+            </div>
+            <AlertDialogTitle className="mt-1">Delete bookmark?</AlertDialogTitle>
+            <AlertDialogDescription>
+              <span className="font-medium text-foreground">
+                {bookmark.title || bookmark.domain}
+              </span>{" "}
+              will be removed permanently. This can&apos;t be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-2 flex-row gap-2 sm:justify-stretch">
+            <AlertDialogCancel className="mt-0 h-12 flex-1 rounded-2xl border-border">
+              Keep it
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                remove(bookmark.id);
+                toast("Bookmark deleted");
+                goBack();
+              }}
+              className="h-12 flex-1 rounded-2xl bg-destructive text-destructive-foreground shadow-none hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {editing && (
         <AddBookmarkSheet
