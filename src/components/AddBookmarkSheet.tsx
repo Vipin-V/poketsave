@@ -288,7 +288,7 @@ export function AddBookmarkSheet({
                   type="date"
                   value={form.deadline}
                   onChange={(e) => set("deadline", e.target.value)}
-                  className="h-11"
+                  className="block h-11 w-full min-w-0 appearance-none"
                 />
               </div>
             </div>
