@@ -190,13 +190,25 @@ export function AddBookmarkSheet({
 
           <div className="space-y-2">
             <Label htmlFor="title">Title</Label>
-            <Input
-              id="title"
-              value={form.title}
-              onChange={(e) => set("title", e.target.value)}
-              placeholder="What is this?"
-              className="h-12"
-            />
+            <div className="relative">
+              <Input
+                id="title"
+                value={form.title}
+                onChange={(e) => set("title", e.target.value)}
+                placeholder="What is this?"
+                className="h-12 pr-10"
+              />
+              {form.title && (
+                <button
+                  type="button"
+                  aria-label="Clear title"
+                  onClick={() => set("title", "")}
+                  className="absolute top-1/2 right-2 grid size-7 -translate-y-1/2 place-items-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <X className="size-4" />
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="space-y-2">

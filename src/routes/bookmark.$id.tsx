@@ -71,6 +71,7 @@ function Detail() {
   const [editing, setEditing] = useState(false);
   const [albumPickerOpen, setAlbumPickerOpen] = useState(false);
   const [interviewInputOpen, setInterviewInputOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const bookmark = bookmarks.find((b) => b.id === id);
 
   function addToAlbum(album: Album) {
