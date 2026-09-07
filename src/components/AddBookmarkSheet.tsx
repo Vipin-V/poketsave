@@ -44,9 +44,18 @@ const empty = {
   deadline: "",
 };
 
-export function AddBookmarkSheet({ open, onOpenChange, initial, prefill, onSave }: Props) {
+export function AddBookmarkSheet({
+  open,
+  onOpenChange,
+  initial,
+  prefill,
+  defaultCategory,
+  onSave,
+}: Props) {
   const getMeta = useServerFn(fetchLinkMetadata);
   const [loading, setLoading] = useState(false);
+  /* once the user picks a category by hand, autofill stops overriding it */
+  const categoryTouched = useRef(!!initial);
   const [form, setForm] = useState(() =>
     initial
       ? {
@@ -64,7 +73,7 @@ export function AddBookmarkSheet({ open, onOpenChange, initial, prefill, onSave 
         }
       : prefill
         ? { ...empty, url: prefill.url, title: prefill.title ?? "" }
-        : empty,
+        : { ...empty, category: defaultCategory ?? "website" },
   );
 
   // Shared-link flow: a link came in via the OS share sheet with no
