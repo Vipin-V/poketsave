@@ -45,8 +45,9 @@ export function NotificationsButton({ open, onOpenChange, onSignInRequested }: P
   const [notifyHourUtc, setNotifyHourUtc] = useState(DEFAULT_NOTIFY_HOUR_UTC);
 
   useEffect(() => {
+    // New accounts: in-app/push alerts start off, email alerts start on.
     setAlertsOn(Boolean(user?.prefs?.["pushSubscription"]));
-    setEmailAlertsOn(Boolean(user?.prefs?.["emailAlerts"]));
+    setEmailAlertsOn(user?.prefs?.["emailAlerts"] !== false);
     setNotifyHourUtc(Number(user?.prefs?.["notifyHour"] ?? DEFAULT_NOTIFY_HOUR_UTC));
   }, [user]);
 
