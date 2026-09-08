@@ -315,7 +315,9 @@ export function BookmarksProvider({ children }: { children: ReactNode }) {
           })
           .catch(() => toast("Couldn't save that to your account — it's kept on this device."));
       } else {
-        saveBookmarks([b, ...loadBookmarks()]);
+        // Saved while signed out — flagged so that signing in later uploads
+        // it to the account instead of dropping it when cloud data loads.
+        saveBookmarks([{ ...b, pendingSync: true }, ...loadBookmarks()]);
       }
     },
     [user],
