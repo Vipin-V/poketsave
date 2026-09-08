@@ -40,6 +40,7 @@ export function LinkTile({ bookmark }: { bookmark: Bookmark }) {
               alt=""
               className="size-full object-cover"
               loading="lazy"
+              referrerPolicy="no-referrer"
             />
           ) : (
             <div className="grid size-full place-items-center">

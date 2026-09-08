@@ -81,6 +81,26 @@ export const fetchLinkMetadata = createServerFn({ method: "POST" })
     }
   });
 
+// Best-effort thumbnail for pages that hide their metadata behind a wall.
+// Uses the public microlink preview service, which resolves social posts
+// (Instagram, X, TikTok, Reddit, ...) into a cover image.
+async function fallbackImage(url: string): Promise<string> {
+  try {
+    const res = await fetch(
+      `https://api.microlink.io/?url=${encodeURIComponent(url)}&meta=true`,
+      { signal: AbortSignal.timeout(7000) },
+    );
+    if (!res.ok) return "";
+    const json = (await res.json()) as {
+      status?: string;
+      data?: { image?: { url?: string }; logo?: { url?: string } };
+    };
+    return json?.data?.image?.url ?? "";
+  } catch {
+    return "";
+  }
+}
+
 function decode(s: string) {
   return s
     .replace(/&amp;/g, "&")
