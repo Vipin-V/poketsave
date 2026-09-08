@@ -138,6 +138,7 @@ function Detail() {
           src={bookmark.image}
           alt=""
           className="mb-4 aspect-video w-full rounded-2xl object-cover"
+          referrerPolicy="no-referrer"
         />
       )}
 

@@ -191,7 +191,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const owner = usersCache.get(ownerId);
     const prefs = owner?.prefs;
     const subscription = prefs?.["pushSubscription"] as webpush.PushSubscription | undefined;
-    const wantsEmail = emailConfigured && Boolean(prefs?.["emailAlerts"]) && Boolean(owner?.email);
+    // Email alerts are on by default — only an explicit `false` opts out.
+    const wantsEmail =
+      emailConfigured && prefs?.["emailAlerts"] !== false && Boolean(owner?.email);
     if (!subscription && !wantsEmail) continue;
 
     const notifyHour = Number(prefs?.["notifyHour"] ?? DEFAULT_NOTIFY_HOUR_UTC);

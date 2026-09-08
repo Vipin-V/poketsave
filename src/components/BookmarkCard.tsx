@@ -187,6 +187,7 @@ export function BookmarkCard({ bookmark }: { bookmark: Bookmark }) {
                 alt=""
                 className="size-16 shrink-0 rounded-xl object-cover"
                 loading="lazy"
+                referrerPolicy="no-referrer"
               />
             ) : null}
           </div>
