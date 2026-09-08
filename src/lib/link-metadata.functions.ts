@@ -54,6 +54,10 @@ export const fetchLinkMetadata = createServerFn({ method: "POST" })
         meta("og:description") || meta("twitter:description") || meta("description");
       let image = meta("og:image") || meta("twitter:image");
       if (image && image.startsWith("/")) image = new URL(image, url).toString();
+      // Instagram/X/TikTok/Reddit serve a login or app wall to plain fetches,
+      // so there's no cover image in the HTML — fall back to their oEmbed /
+      // preview services so social saves still get a thumbnail.
+      if (!image) image = await fallbackImage(url);
 
       return {
         ok: true as const,
