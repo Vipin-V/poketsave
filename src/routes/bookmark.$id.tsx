@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { PhoneShell } from "@/components/PhoneShell";
 import { AddBookmarkSheet } from "@/components/AddBookmarkSheet";
 import { DeadlinePill } from "@/components/DeadlinePill";
+import { Thumb } from "@/components/Thumb";
 import { shareBookmarks } from "@/lib/share";
 import { Button } from "@/components/ui/button";
 import {
@@ -133,14 +134,11 @@ function Detail() {
         </button>
       </div>
 
-      {bookmark.image && (
-        <img
-          src={bookmark.image}
-          alt=""
-          className="mb-4 aspect-video w-full rounded-2xl object-cover"
-          referrerPolicy="no-referrer"
-        />
-      )}
+      <Thumb
+        bookmark={bookmark}
+        lazy={false}
+        className="mb-4 aspect-video w-full rounded-2xl object-cover"
+      />
 
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <img
