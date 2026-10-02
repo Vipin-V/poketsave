@@ -5,6 +5,7 @@ import { faviconFor, type Bookmark } from "@/lib/bookmarks";
 import { useBookmarks } from "@/hooks/use-bookmarks";
 import { folderFor } from "@/lib/collections";
 import { DeadlineTag } from "./DeadlineTag";
+import { Thumb } from "./Thumb";
 
 // Grid tile used inside a folder: thumbnail on top, bold title, source below.
 export function LinkTile({ bookmark }: { bookmark: Bookmark }) {
@@ -34,19 +35,15 @@ export function LinkTile({ bookmark }: { bookmark: Bookmark }) {
         className="glass brutal-press block overflow-hidden rounded-2xl"
       >
         <div className={`relative aspect-[4/3] w-full border-b-2 border-border ${folder.color}`}>
-          {bookmark.image ? (
-            <img
-              src={bookmark.image}
-              alt=""
-              className="size-full object-cover"
-              loading="lazy"
-              referrerPolicy="no-referrer"
-            />
-          ) : (
-            <div className="grid size-full place-items-center">
-              <folder.icon className="size-8 text-primary-foreground" strokeWidth={2.4} />
-            </div>
-          )}
+          <Thumb
+            bookmark={bookmark}
+            className="size-full object-cover"
+            fallback={
+              <div className="grid size-full place-items-center">
+                <folder.icon className="size-8 text-primary-foreground" strokeWidth={2.4} />
+              </div>
+            }
+          />
         </div>
 
         <div className="p-2.5">

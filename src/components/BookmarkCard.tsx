@@ -13,6 +13,7 @@ import {
 } from "@/lib/bookmarks";
 import { useBookmarks } from "@/hooks/use-bookmarks";
 import { DeadlinePill } from "./DeadlinePill";
+import { Thumb } from "./Thumb";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -181,15 +182,7 @@ export function BookmarkCard({ bookmark }: { bookmark: Bookmark }) {
                 )}
               </div>
             </div>
-            {bookmark.image ? (
-              <img
-                src={bookmark.image}
-                alt=""
-                className="size-16 shrink-0 rounded-xl object-cover"
-                loading="lazy"
-                referrerPolicy="no-referrer"
-              />
-            ) : null}
+            <Thumb bookmark={bookmark} className="size-16 shrink-0 rounded-xl object-cover" />
           </div>
         </Link>
       </div>
