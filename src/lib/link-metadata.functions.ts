@@ -3,8 +3,19 @@ import { z } from "zod";
 
 export const fetchLinkMetadata = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ url: z.string().min(3) }).parse(data))
+  .handler(async ({ data }) => scrape(data.url));
+
+// Re-fetches a fresh cover image for a bookmark whose saved image has expired.
+export const refreshThumbnail = createServerFn({ method: "POST" })
+  .inputValidator((data) => z.object({ url: z.string().min(3).max(2000) }).parse(data))
   .handler(async ({ data }) => {
-    const url = /^https?:\/\//i.test(data.url) ? data.url : `https://${data.url}`;
+    const meta = await scrape(data.url);
+    return { image: meta.image };
+  });
+
+async function scrape(rawUrl: string) {
+  {
+    const url = /^https?:\/\//i.test(rawUrl) ? rawUrl : `https://${rawUrl}`;
     let host = "";
     try {
       host = new URL(url).hostname.replace(/^www\./, "");
@@ -58,6 +69,11 @@ export const fetchLinkMetadata = createServerFn({ method: "POST" })
       // so there's no cover image in the HTML — fall back to their oEmbed /
       // preview services so social saves still get a thumbnail.
       if (!image) image = await fallbackImage(url);
+      // Social CDN image links expire after a few days — keep our own copy.
+      if (image) {
+        const { persistImage } = await import("./thumbnails.server");
+        image = await persistImage(image, url);
+      }
 
       return {
         ok: true as const,
@@ -79,7 +95,8 @@ export const fetchLinkMetadata = createServerFn({ method: "POST" })
         favicon,
       };
     }
-  });
+  }
+}
 
 // Best-effort thumbnail for pages that hide their metadata behind a wall.
 // Uses the public microlink preview service, which resolves social posts

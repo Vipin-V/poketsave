@@ -18,6 +18,7 @@ import { Route as AlbumsIdRouteImport } from './routes/albums/$id'
 import { Route as BookmarkIdRouteImport } from './routes/bookmark.$id'
 import { Route as CollectionCategoryRouteImport } from './routes/collection.$category'
 import { Route as AlbumsJoinIdRouteImport } from './routes/albums/join.$id'
+import { Route as ApiPublicThumbKeyRouteImport } from './routes/api/public/thumb.$key'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -64,6 +65,11 @@ const AlbumsJoinIdRoute = AlbumsJoinIdRouteImport.update({
   path: '/albums/join/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicThumbKeyRoute = ApiPublicThumbKeyRouteImport.update({
+  id: '/api/public/thumb/$key',
+  path: '/api/public/thumb/$key',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/collection/$category': typeof CollectionCategoryRoute
   '/albums/': typeof AlbumsIndexRoute
   '/albums/join/$id': typeof AlbumsJoinIdRoute
+  '/api/public/thumb/$key': typeof ApiPublicThumbKeyRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -86,6 +93,7 @@ export interface FileRoutesByTo {
   '/collection/$category': typeof CollectionCategoryRoute
   '/albums': typeof AlbumsIndexRoute
   '/albums/join/$id': typeof AlbumsJoinIdRoute
+  '/api/public/thumb/$key': typeof ApiPublicThumbKeyRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -98,6 +106,7 @@ export interface FileRoutesById {
   '/collection/$category': typeof CollectionCategoryRoute
   '/albums/': typeof AlbumsIndexRoute
   '/albums/join/$id': typeof AlbumsJoinIdRoute
+  '/api/public/thumb/$key': typeof ApiPublicThumbKeyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -111,6 +120,7 @@ export interface FileRouteTypes {
     | '/collection/$category'
     | '/albums/'
     | '/albums/join/$id'
+    | '/api/public/thumb/$key'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -122,6 +132,7 @@ export interface FileRouteTypes {
     | '/collection/$category'
     | '/albums'
     | '/albums/join/$id'
+    | '/api/public/thumb/$key'
   id:
     | '__root__'
     | '/'
@@ -133,6 +144,7 @@ export interface FileRouteTypes {
     | '/collection/$category'
     | '/albums/'
     | '/albums/join/$id'
+    | '/api/public/thumb/$key'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -145,6 +157,7 @@ export interface RootRouteChildren {
   CollectionCategoryRoute: typeof CollectionCategoryRoute
   AlbumsIndexRoute: typeof AlbumsIndexRoute
   AlbumsJoinIdRoute: typeof AlbumsJoinIdRoute
+  ApiPublicThumbKeyRoute: typeof ApiPublicThumbKeyRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -212,6 +225,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AlbumsJoinIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/thumb/$key': {
+      id: '/api/public/thumb/$key'
+      path: '/api/public/thumb/$key'
+      fullPath: '/api/public/thumb/$key'
+      preLoaderRoute: typeof ApiPublicThumbKeyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -225,6 +245,7 @@ const rootRouteChildren: RootRouteChildren = {
   CollectionCategoryRoute: CollectionCategoryRoute,
   AlbumsIndexRoute: AlbumsIndexRoute,
   AlbumsJoinIdRoute: AlbumsJoinIdRoute,
+  ApiPublicThumbKeyRoute: ApiPublicThumbKeyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
