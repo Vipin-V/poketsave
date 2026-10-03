@@ -1,4 +1,15 @@
-export type Category = "job" | "internship" | "reading" | "social" | "event" | "website" | "travel" | "food";
+import { customLabels } from "./folders";
+export type BuiltinCategory =
+  | "job"
+  | "internship"
+  | "reading"
+  | "social"
+  | "event"
+  | "website"
+  | "travel"
+  | "food";
+/* custom folders use `f_xxxxxx` ids */
+export type Category = BuiltinCategory | `f_${string}`;
 
 export type Bookmark = {
   id: string;
@@ -40,7 +51,7 @@ export const CATEGORIES: { value: Category; label: string }[] = [
 ];
 
 export const categoryLabel = (c: Category) =>
-  CATEGORIES.find((x) => x.value === c)?.label ?? "Websites";
+  CATEGORIES.find((x) => x.value === c)?.label ?? customLabels.get(c) ?? "Folder";
 
 // Fields worth searching on, flattened into one string — shared by the
 // plain-text filter and by AI search (which embeds this same text).
