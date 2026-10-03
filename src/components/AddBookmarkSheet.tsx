@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { fetchLinkMetadata } from "@/lib/link-metadata.functions";
+import { useFolders } from "@/hooks/use-folders";
+import { isCustomCategory } from "@/lib/folders";
 import {
   CATEGORIES,
   REMINDER_CATEGORIES,
@@ -55,7 +57,14 @@ export function AddBookmarkSheet({
   const getMeta = useServerFn(fetchLinkMetadata);
   const [loading, setLoading] = useState(false);
   /* once the user picks a category by hand, autofill stops overriding it */
-  const categoryTouched = useRef(!!initial);
+  const categoryTouched = useRef(
+    !!initial || (!!defaultCategory && isCustomCategory(defaultCategory)),
+  );
+  const { folders } = useFolders();
+  const categoryOptions = [
+    ...CATEGORIES,
+    ...folders.filter((f) => !f.builtin).map((f) => ({ value: f.id, label: f.label })),
+  ];
   const [form, setForm] = useState(() =>
     initial
       ? {
@@ -214,7 +223,7 @@ export function AddBookmarkSheet({
           <div className="space-y-2">
             <Label>Category</Label>
             <div className="grid grid-cols-3 gap-2">
-              {CATEGORIES.map((c) => (
+              {categoryOptions.map((c) => (
                 <button
                   key={c.value}
                   type="button"
@@ -222,7 +231,7 @@ export function AddBookmarkSheet({
                     categoryTouched.current = true;
                     set("category", c.value);
                   }}
-                  className={`min-h-11 rounded-xl border px-1 text-xs font-medium transition-colors ${
+                  className={`min-h-11 rounded-xl border truncate px-1 text-xs font-medium transition-colors ${
                     form.category === c.value
                       ? "border-primary/60 bg-primary/15 text-primary"
                       : "border-border text-muted-foreground"
