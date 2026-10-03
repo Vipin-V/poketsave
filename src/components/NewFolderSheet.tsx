@@ -21,9 +21,15 @@ export function NewFolderSheet({
 
   function create() {
     const name = label.trim();
-    if (!name) return toast("Give your folder a name");
+    if (!name) {
+      toast("Give your folder a name");
+      return;
+    }
     if (folders.some((f) => f.label.toLowerCase() === name.toLowerCase()))
-      return toast("You already have a folder with that name");
+    {
+      toast("You already have a folder with that name");
+      return;
+    }
     addFolder({ label: name.slice(0, 30), icon, color });
     toast(`“${name}” folder created`);
     setLabel("");
