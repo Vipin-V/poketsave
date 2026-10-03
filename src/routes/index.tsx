@@ -1,13 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Search, Clock, Sparkles, Share, X, Star } from "lucide-react";
+import { Search, Clock, Sparkles, Share, X, Star, FolderPlus } from "lucide-react";
 import { PhoneShell } from "@/components/PhoneShell";
 import { LinkTile } from "@/components/LinkTile";
 import { AddBookmarkSheet } from "@/components/AddBookmarkSheet";
 import { Input } from "@/components/ui/input";
 import { useBookmarks } from "@/hooks/use-bookmarks";
 import { daysLeft, extractSharedUrl, searchableText } from "@/lib/bookmarks";
-import { FOLDERS } from "@/lib/collections";
+import { useFolders } from "@/hooks/use-folders";
+import { iconFor } from "@/lib/folders";
+import { NewFolderSheet } from "@/components/NewFolderSheet";
 import { dedupeByUrl, loadAlbumVisibility } from "@/lib/album-visibility";
 import { embedTexts } from "@/lib/embed.functions";
 import {
@@ -64,6 +66,8 @@ function Library() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
   const [open, setOpen] = useState(false);
+  const [newFolderOpen, setNewFolderOpen] = useState(false);
+  const { folders } = useFolders();
   const [sharePrefill, setSharePrefill] = useState<
     { url: string; title?: string | undefined } | undefined
   >();
@@ -337,15 +341,15 @@ function Library() {
         <>
           <h2 className="mb-3 text-lg font-extrabold">My Collections</h2>
           <div className="grid grid-cols-2 gap-3">
-            {FOLDERS.map((f) => (
+            {folders.map((f) => (
               <FolderCard
-                key={f.category}
+                key={f.id}
                 to="/collection/$category"
-                params={{ category: f.category }}
+                params={{ category: f.id }}
                 label={f.label}
-                count={counts.get(f.category) ?? 0}
+                count={counts.get(f.id) ?? 0}
                 color={f.color}
-                icon={f.icon}
+                icon={iconFor(f)}
               />
             ))}
             <FolderCard
@@ -355,7 +359,16 @@ function Library() {
               color="bg-primary"
               icon={Star}
             />
+            <button
+              type="button"
+              onClick={() => setNewFolderOpen(true)}
+              className="brutal-press mt-3 flex min-h-[7.25rem] flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border text-muted-foreground"
+            >
+              <FolderPlus className="size-6" strokeWidth={2.2} />
+              <span className="text-sm font-extrabold">New folder</span>
+            </button>
           </div>
+          <NewFolderSheet open={newFolderOpen} onOpenChange={setNewFolderOpen} />
 
           {ready && bookmarks.length === 0 && (
             <div className="glass mt-5 rounded-2xl px-6 py-10 text-center">

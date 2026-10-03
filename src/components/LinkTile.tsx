@@ -3,14 +3,16 @@ import { Star } from "lucide-react";
 import { toast } from "sonner";
 import { faviconFor, type Bookmark } from "@/lib/bookmarks";
 import { useBookmarks } from "@/hooks/use-bookmarks";
-import { folderFor } from "@/lib/collections";
+import { useFolders } from "@/hooks/use-folders";
+import { iconFor } from "@/lib/folders";
 import { DeadlineTag } from "./DeadlineTag";
 import { Thumb } from "./Thumb";
 
 // Grid tile used inside a folder: thumbnail on top, bold title, source below.
 export function LinkTile({ bookmark }: { bookmark: Bookmark }) {
   const { update } = useBookmarks();
-  const folder = folderFor(bookmark.category);
+  const folder = useFolders().findFolder(bookmark.category);
+  const FolderIcon = iconFor(folder);
 
   return (
     <div className="relative">
@@ -40,7 +42,7 @@ export function LinkTile({ bookmark }: { bookmark: Bookmark }) {
             className="size-full object-cover"
             fallback={
               <div className="grid size-full place-items-center">
-                <folder.icon className="size-8 text-primary-foreground" strokeWidth={2.4} />
+                <FolderIcon className="size-8 text-primary-foreground" strokeWidth={2.4} />
               </div>
             }
           />
