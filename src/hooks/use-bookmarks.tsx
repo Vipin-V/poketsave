@@ -3,6 +3,8 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -13,6 +15,7 @@ import {
   ALBUMS_COLLECTION_ID,
   BOOKMARKS_COLLECTION_ID,
   DATABASE_ID,
+  account,
   client,
   databases,
 } from "@/integrations/appwrite/client";
@@ -134,6 +137,38 @@ async function listAllBookmarkDocs(): Promise<BookmarkDoc[]> {
   return all;
 }
 
+// Applied / interview date / favourite are personal: in a shared album each
+// member tracks their own, so they live in the user's account prefs
+// (`albumStatus`), never on the shared bookmark document.
+type PersonalStatus = { applied?: boolean; interviewDate?: string; favorite?: boolean };
+type PersonalMap = Record<string, PersonalStatus>;
+const PERSONAL_KEYS = ["applied", "interviewDate", "favorite"] as const;
+const PERSONAL_LS = "poketsave.albumStatus.v1";
+
+function parsePersonal(raw: unknown): PersonalMap {
+  if (typeof raw !== "string") return {};
+  try {
+    const v = JSON.parse(raw);
+    return v && typeof v === "object" ? (v as PersonalMap) : {};
+  } catch {
+    return {};
+  }
+}
+
+function splitPatch(patch: Partial<Bookmark>) {
+  const shared: Partial<Bookmark> = { ...patch };
+  const personal: PersonalStatus = {};
+  let hasPersonal = false;
+  for (const k of PERSONAL_KEYS) {
+    if (k in patch) {
+      (personal as Record<string, unknown>)[k] = patch[k];
+      delete shared[k];
+      hasPersonal = true;
+    }
+  }
+  return { shared, personal, hasPersonal };
+}
+
 type BookmarksApi = {
   bookmarks: Bookmark[];
   ready: boolean;
@@ -154,6 +189,47 @@ export function BookmarksProvider({ children }: { children: ReactNode }) {
   // is read in the effect below right after hydration.
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [ready, setReady] = useState(false);
+  const [personal, setPersonal] = useState<PersonalMap>({});
+  const personalRef = useRef<PersonalMap>({});
+  const rawRef = useRef<Bookmark[]>([]);
+  rawRef.current = bookmarks;
+
+  // Load this user's own status for shared-album bookmarks.
+  useEffect(() => {
+    if (!authReady || !user) {
+      personalRef.current = {};
+      setPersonal({});
+      return;
+    }
+    const cached = parsePersonal(localStorage.getItem(PERSONAL_LS + ":" + user.$id));
+    personalRef.current = cached;
+    setPersonal(cached);
+    account
+      .getPrefs()
+      .then((prefs) => {
+        const cloud = parsePersonal((prefs as Record<string, unknown>)["albumStatus"]);
+        const merged = { ...cached, ...cloud };
+        personalRef.current = merged;
+        setPersonal(merged);
+      })
+      .catch(() => {});
+  }, [user, authReady]);
+
+  const savePersonal = useCallback(
+    (id: string, status: PersonalStatus) => {
+      if (!user) return;
+      const next = { ...personalRef.current, [id]: { ...personalRef.current[id], ...status } };
+      personalRef.current = next;
+      setPersonal(next);
+      const json = JSON.stringify(next);
+      localStorage.setItem(PERSONAL_LS + ":" + user.$id, json);
+      void account
+        .getPrefs()
+        .then((prefs) => account.updatePrefs({ ...prefs, albumStatus: json }))
+        .catch(() => toast("Couldn't save that status to your account."));
+    },
+    [user],
+  );
 
   // Guest mode: identical to the pre-auth behaviour, pure localStorage.
   useEffect(() => {
@@ -292,6 +368,12 @@ export function BookmarksProvider({ children }: { children: ReactNode }) {
         // sync this bookmark still needs uploading, rather than having been
         // deleted elsewhere in the meantime).
         const pending = { ...b, pendingSync: true };
+        let docData: Partial<Bookmark> = b;
+        if (b.albumId) {
+          const { shared, personal: mine } = splitPatch(b);
+          docData = shared;
+          savePersonal(b.id, mine);
+        }
         setBookmarks((prev) => {
           const next = [pending, ...prev];
           saveBookmarks(next);
@@ -302,7 +384,7 @@ export function BookmarksProvider({ children }: { children: ReactNode }) {
             DATABASE_ID,
             BOOKMARKS_COLLECTION_ID,
             ID.custom(b.id),
-            bookmarkToData(b) as Omit<BookmarkDoc, keyof Models.Document>,
+            bookmarkToData(docData) as Omit<BookmarkDoc, keyof Models.Document>,
             permissionsForBookmark(user.$id, teamId ? { teamId, ownerId } : undefined),
           )
           .then((doc) => {
@@ -320,14 +402,22 @@ export function BookmarksProvider({ children }: { children: ReactNode }) {
         saveBookmarks([{ ...b, pendingSync: true }, ...loadBookmarks()]);
       }
     },
-    [user],
+    [user, savePersonal],
   );
 
   const update = useCallback(
     (id: string, patch: Partial<Bookmark>) => {
       if (user) {
+        const target = rawRef.current.find((b) => b.id === id);
+        let docPatch = patch;
+        if (target?.albumId) {
+          const { shared, personal: mine, hasPersonal } = splitPatch(patch);
+          docPatch = shared;
+          if (hasPersonal) savePersonal(id, mine);
+        }
+        if (Object.keys(docPatch).length === 0) return;
         setBookmarks((prev) => {
-          const next = prev.map((b) => (b.id === id ? { ...b, ...patch } : b));
+          const next = prev.map((b) => (b.id === id ? { ...b, ...docPatch } : b));
           saveBookmarks(next);
           return next;
         });
@@ -336,14 +426,14 @@ export function BookmarksProvider({ children }: { children: ReactNode }) {
             DATABASE_ID,
             BOOKMARKS_COLLECTION_ID,
             id,
-            bookmarkToData(patch),
+            bookmarkToData(docPatch),
           )
           .catch(() => toast("Couldn't update that on your account."));
       } else {
         saveBookmarks(loadBookmarks().map((b) => (b.id === id ? { ...b, ...patch } : b)));
       }
     },
-    [user],
+    [user, savePersonal],
   );
 
   const remove = useCallback(
@@ -379,9 +469,33 @@ export function BookmarksProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  // Overlay each member's own status onto shared-album bookmarks. Older
+  // albums stored status on the shared document; that legacy value is only
+  // trusted for bookmarks this user added/owns, everyone else starts fresh.
+  const visible = useMemo(
+    () =>
+      bookmarks.map((b) => {
+        if (!b.albumId) return b;
+        const mine = personal[b.id];
+        const legacy = b.canDelete !== false;
+        return {
+          ...b,
+          applied: mine && "applied" in mine ? mine.applied : legacy ? b.applied : false,
+          interviewDate:
+            mine && "interviewDate" in mine
+              ? mine.interviewDate
+              : legacy
+                ? b.interviewDate
+                : undefined,
+          favorite: mine && "favorite" in mine ? mine.favorite : legacy ? b.favorite : false,
+        };
+      }),
+    [bookmarks, personal],
+  );
+
   return (
     <BookmarksContext.Provider
-      value={{ bookmarks, ready, add, update, remove, removeAlbumBookmarks }}
+      value={{ bookmarks: visible, ready, add, update, remove, removeAlbumBookmarks }}
     >
       {children}
     </BookmarksContext.Provider>
