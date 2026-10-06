@@ -140,7 +140,7 @@ async function listAllBookmarkDocs(): Promise<BookmarkDoc[]> {
 // Applied / interview date / favourite are personal: in a shared album each
 // member tracks their own, so they live in the user's account prefs
 // (`albumStatus`), never on the shared bookmark document.
-type PersonalStatus = { applied?: boolean; interviewDate?: string; favorite?: boolean };
+type PersonalStatus = { applied?: boolean; interviewDate?: string | null; favorite?: boolean };
 type PersonalMap = Record<string, PersonalStatus>;
 const PERSONAL_KEYS = ["applied", "interviewDate", "favorite"] as const;
 const PERSONAL_LS = "poketsave.albumStatus.v1";
@@ -161,7 +161,7 @@ function splitPatch(patch: Partial<Bookmark>) {
   let hasPersonal = false;
   for (const k of PERSONAL_KEYS) {
     if (k in patch) {
-      (personal as Record<string, unknown>)[k] = patch[k];
+      (personal as Record<string, unknown>)[k] = patch[k] ?? (k === "interviewDate" ? null : false);
       delete shared[k];
       hasPersonal = true;
     }
@@ -483,7 +483,7 @@ export function BookmarksProvider({ children }: { children: ReactNode }) {
           applied: mine && "applied" in mine ? mine.applied : legacy ? b.applied : false,
           interviewDate:
             mine && "interviewDate" in mine
-              ? mine.interviewDate
+              ? (mine.interviewDate ?? undefined)
               : legacy
                 ? b.interviewDate
                 : undefined,
